@@ -50,7 +50,7 @@ SkeletonNode::SkeletonNode(std::ifstream& descr) throw(ParseException) {
 		name = "no-name";
 	}
 
-	if (MYINFO)
+	if (debug::ison(debug::DETAILED))
 		std::cout << "Parsing joint " << getDescr() << std::endl;
 
 	descr >> token;
@@ -122,7 +122,7 @@ std::string SkeletonNode::getDescr() const {
 }
 
 SkeletonNode::~SkeletonNode() {
-	if (MYINFO)
+	if (debug::ison(debug::EVERYTHING))
 		std::cout << getDescr() << " is now dying." << std::endl;
 }
 
@@ -144,7 +144,7 @@ void SkeletonNode::addAnimationFrame(std::ifstream& descr) {
 	}
 	double xRot, yRot, zRot;
 	descr >> zRot >> yRot >> xRot;
-	if (MYINFO) std::cout << "Transformation matrix " << getDescr() << ", frame " << motion.size() << std::endl;
+	if (debug::ison(debug::EVERYTHING)) std::cout << "Transformation matrix " << getDescr() << ", frame " << motion.size() << std::endl;
 	if (channelNum == 6) {
 		motion.push_back(MotionFrame(zRot, yRot, xRot, xPos, yPos, zPos));
 	} else if (channelNum == 3) {
@@ -338,7 +338,7 @@ void MotionFrame::genMatrix() {
 	}
 	rotations = rot;
 
-	if (MYINFO) print4x4Matrix(modelTrans);
+	if (debug::ison(debug::EVERYTHING)) print4x4Matrix(modelTrans);
 
 }
 

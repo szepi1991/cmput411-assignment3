@@ -38,6 +38,8 @@ private:
 	double stdFPS;
 	double virtFPS;
 
+	static const float WIDTH = 5;
+
 	long timeOfPreviousCall;
 //	boost::posix_time::ptime lastTime;
 

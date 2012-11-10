@@ -173,19 +173,20 @@ void Animation::outputBVH(std::ostream& out) {
 // displays the current frame (that has been already calculated from curTime)
 void Animation::display() {
 
-//	boost::posix_time::ptime curTime = boost::posix_time::microsec_clock::universal_time();
+    glLineWidth(WIDTH);
+
 	long curTime = glutGet(GLUT_ELAPSED_TIME);
 	if (animating) {
-//		boost::posix_time::time_duration dur = curTime - lastTime;
-//		addToTime( dur.total_milliseconds() ); // automatically converted to double
 		addToTime( curTime - timeOfPreviousCall ); // automatically converted to double
 	}
 	timeOfPreviousCall = curTime;
-//	lastTime = curTime;
 
 //	if (MYINFO) std::cout << "Drawing Frame " << curFrameFrac << std::endl;
 	for (unsigned i = 0; i < roots.size(); ++i)
 		roots[i].display(curFrameFrac);
+
+    glLineWidth(1); // assume it's 1 by def
+
 }
 
 

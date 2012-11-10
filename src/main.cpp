@@ -19,6 +19,7 @@
 #include "ParseException.h"
 #include "Camera.h"
 #include "tools.h"
+#include "Mesh.h"
 
 #include "Quaternion.h"
 
@@ -28,9 +29,9 @@ using namespace std;
 unsigned SkeletonNode::nodeCounter=0;
 static boost::shared_ptr<Animation> anim;
 static Camera cam;
+static Mesh model;
 
 static const unsigned SCR_WIDTH = 800, SCR_HEIGHT = 600;
-
 
 
 void drawText(float x, float y, float z, char const *string) {
@@ -41,32 +42,39 @@ void drawText(float x, float y, float z, char const *string) {
 
 void setup(int argc, char **argv) throw (int) {
 
-	if (argc != 2) {
-		cerr << "ERROR: this program takes exactly 1 argument: the .bvh file to load." << endl;
+	if (argc != 3) {
+		cerr << "ERROR: this program takes exactly 2 argument: first a wavefront .obj file, then a .bvh file to load." << endl;
 		throw 1;
 	}
 
 	cout << "Reading in file now." << endl;
 	try {
-		anim.reset(new Animation(argv[1]));
+		model.loadModel(argv[1]);
+
+		anim.reset(new Animation(argv[2]));
 		cout << "The name of the loaded file is " << anim->getFileName() << endl;
 
 		float xMin, xMax, yMin, yMax, zMin, zMax;
 		anim->closestFit(xMin, xMax, yMin, yMax, zMin, zMax);
 
-		float extra = 2; // TODO maybe baesd on figure size? (our upper bound is too big)
+		float extra = 1; // TODO maybe based on figure size? (our upper bound is too big)
 		cam.makeVisible(xMin-extra, xMax+extra,
 				yMin-extra, yMax+extra, zMin-extra, zMax+extra);
 
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
-//		glFrustum(-1.0, 1.0, -1.0, 1.0, 1.0, 100.0);
 		gluPerspective(90, ((double)SCR_WIDTH)/((double)SCR_HEIGHT), cam.getNear(), cam.getFar());
 
 	} catch (ParseException& e) {
 		cerr << e.what() << endl;
 		throw 2;
 	}
+
+	cout << "debug message level:" << endl;
+	cout << "- NONE is " << debug::ison(debug::NONE) << endl;
+	cout << "- LITTLE is " << debug::ison(debug::LITTLE) << endl;
+	cout << "- DETAILED is " << debug::ison(debug::DETAILED) << endl;
+	cout << "- EVERYTHING is " << debug::ison(debug::EVERYTHING) << endl;
 
 }
 
@@ -116,7 +124,8 @@ void drawScene(void)
 	std::stringstream fpsStream;
 	fpsStream << "virtual fps: " << anim->getVirtualFPS();
 	// Set text color.
-	glColor3f(0.0, 0.0, 0.0);
+//	glColor3f(0.0, 0.0, 0.0);
+	glColor3f(1.0, 1.0, 1.0);
 	drawText(-37, 27, -30, fpsStream.str().c_str());
 
 	cam.view();
@@ -124,8 +133,11 @@ void drawScene(void)
 	if (MYINFO) drawAxes(10);
 
 	// Set stickman color.
-	glColor3f(0.0, 0.0, 0.0);
+	glColor3f(1.0,1.0,0.1);
 	anim->display();
+	// wireframe
+	glColor3f(1.0, 1.0, 1.0);
+	model.display();
 
 	glutSwapBuffers();
 }
@@ -153,9 +165,13 @@ void keyInput(unsigned char key, int x, int y) {
 		break;
 	case 'w':
 	{
-		ofstream outfile("output.bvh");
-		anim->outputBVH(outfile);
-		outfile.close();
+		ofstream outfile1("motionout.bvh");
+		anim->outputBVH(outfile1);
+		outfile1.close();
+		ofstream outfile2("meshout.obj");
+		model.printMesh(outfile2);
+		outfile2.close();
+		cout << "Finished writing output files." << endl;
 		break;
 	}
 	default:
@@ -181,6 +197,35 @@ void doWhenIdle() {
 
 
 void testCode() {
+
+
+	vector<unsigned> vec;
+	for (unsigned i = 1; i < 10; i++) {
+		vec.push_back(i);
+	}
+
+	for (vector<unsigned>::iterator it = vec.begin(); it != vec.end(); ++it) {
+		cout << *it;
+	}
+	cout << endl;
+
+	for (vector<unsigned>::iterator it = vec.begin(); it != vec.end(); ) {
+//		cout << "v " << *(it++) << " " << *(it++)  << " " << *(it++) << std::endl;
+		cout << "v " << *(it++);
+		cout << " " << *(it++);
+		cout << " " << *(it++) << std::endl;
+	}
+
+//	float a, b, c;
+//	a = b = c = 0.3;
+//	cout << a << " " << b << " " << c << " -> ";
+//	normalize(&a, &b, &c);
+//	cout << a << " " << b << " " << c << endl;
+//
+//	a = 0.3; b = 0.1; c = -1;
+//	cout << a << " " << b << " " << c << " -> ";
+//	normalize(&a, &b, &c);
+//	cout << a << " " << b << " " << c << endl;
 
 //	Quaternion q1(PI/2, 1, 0, 0);
 //	q1.printRotMatrix();
@@ -210,6 +255,7 @@ void testCode() {
 int main(int argc, char **argv) {
 
 //	testCode();
+//	return 0;
 
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
@@ -218,7 +264,7 @@ int main(int argc, char **argv) {
 	glutCreateWindow("box.cpp");
 
 	// Set background (or clearing) color.
-	glClearColor(1.0, 1.0, 1.0, 0.0);
+	glClearColor(0.0, 0.0, 0.0, 0.0);
 	// Initialize.
 	try {
 		setup(argc, argv);
