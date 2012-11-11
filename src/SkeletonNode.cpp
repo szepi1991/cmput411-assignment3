@@ -55,7 +55,9 @@ SkeletonNode::SkeletonNode(std::ifstream& descr) throw(ParseException) {
 
 	descr >> token;
 	confirmParse(token, "OFFSET");
-	descr >> offset[0] >> offset[1] >> offset[2];
+	float offs[3];
+	descr >> offs[0] >> offs[1] >> offs[2];
+	offset.reset(new Point(offs[0], offs[1], offs[2]));
 	descr >> token;
 	confirmParse(token, "CHANNELS");
 
@@ -91,7 +93,8 @@ SkeletonNode::SkeletonNode(std::ifstream& descr) throw(ParseException) {
 			confirmParse(token, "OFFSET");
 			boost::array<float, 3> offs;
 			descr >> offs[0] >> offs[1] >> offs[2];
-			children.push_back(SkeletonNode(offs));
+			boost::shared_ptr<Point> leafOff(new Point(offs[0], offs[1], offs[2]));
+			children.push_back(SkeletonNode(leafOff));
 			descr >> token;
 			confirmParse(token, "}");
 		} else if (token.compare("JOINT") == 0) {
@@ -106,7 +109,7 @@ SkeletonNode::SkeletonNode(std::ifstream& descr) throw(ParseException) {
 
 /* Use this constructor for leaf nodes.
  */
-SkeletonNode::SkeletonNode(boost::array<float, 3> const & offsets) {
+SkeletonNode::SkeletonNode(boost::shared_ptr<Point> const & offsets) {
 	myCounter = nodeCounter++;
 	name = "leaf";
 	if (MYINFO)
@@ -127,7 +130,7 @@ SkeletonNode::~SkeletonNode() {
 }
 
 /* If this is a leaf then it has no endpoint .. we throw 0 */
-boost::array<float, 3> SkeletonNode::getEndPoint() const throw(int) {
+const boost::shared_ptr<Point> SkeletonNode::getEndPoint() const throw(int) {
 	if (children.size() == 0) throw 0;
 	else return children[0].offset;
 }
@@ -169,7 +172,7 @@ void SkeletonNode::display(double frame = -1) const {
 
 	glPushMatrix();
 	// do all the drawing here
-	glTranslatef(offset[0], offset[1], offset[2]);
+	glTranslatef(offset->x(), offset->y(), offset->z());
 
 	if (frame >= 0) {
 		double intPart, fracPart;
@@ -190,10 +193,10 @@ void SkeletonNode::display(double frame = -1) const {
 
 	}
 
-	boost::array<float, 3> endP = getEndPoint();
+	const boost::shared_ptr<Point> endP = getEndPoint();
     glBegin(GL_LINES);
        glVertex3f(0.0f, 0.0f, 0.0f);
-	   glVertex3f(endP[0], endP[1], endP[2]);
+	   glVertex3f(endP->get(0), endP->get(1), endP->get(2));
     glEnd();
 
     for (unsigned i = 0; i < children.size(); ++i) {
@@ -208,10 +211,10 @@ void SkeletonNode::display(double frame = -1) const {
 void SkeletonNode::offsetBounds(float * mins, float * maxs) const {
 	// add on my offsets
 	for (unsigned i = 0; i < 3; ++i) {
-		if (offset[i] < 0) {
-			mins[i] += offset[i];
+		if (offset->get(i) < 0) {
+			mins[i] += offset->get(i);
 		} else {
-			maxs[i] += offset[i];
+			maxs[i] += offset->get(i);
 		}
 	}
 	// call for children
@@ -232,9 +235,9 @@ void SkeletonNode::printNames(unsigned level) const {
 	printRepeated(std::cout, level, "- ");
 //	for (unsigned i = 0; i < level; ++i) std::cout << "- ";
 	std::cout << name << ": \t "
-			<< offset[0] << ", "
-			<< offset[1] << ", "
-			<< offset[2] << ", " << std::endl;
+			<< offset->get(0) << ", "
+			<< offset->get(1) << ", "
+			<< offset->get(2) << ", " << std::endl;
 	for (std::vector<SkeletonNode>::const_iterator it = children.begin();
 											it != children.end(); ++it) {
 		it->printNames(level+1);
@@ -254,7 +257,7 @@ void SkeletonNode::printTreeBVH(std::ostream& out, unsigned level) const {
 		out << "{" << std::endl;
 		level++;
 		printRepeated(out, level, "\t");
-		out << "OFFSET " << offset[0] << " " << offset[1] << " " << offset[2] << std::endl;
+		out << "OFFSET " << offset->get(0) << " " << offset->get(1) << " " << offset->get(2) << std::endl;
 	} else {
 		if (level == 0) {
 			out << "ROOT ";
@@ -266,7 +269,7 @@ void SkeletonNode::printTreeBVH(std::ostream& out, unsigned level) const {
 		out << "{" << std::endl;
 		level++;
 		printRepeated(out, level, "\t");
-		out << "OFFSET " << offset[0] << " " << offset[1] << " " << offset[2] << std::endl;
+		out << "OFFSET " << offset->get(0) << " " << offset->get(1) << " " << offset->get(2) << std::endl;
 		printRepeated(out, level, "\t");
 		out << "CHANNELS " << channelNum << " ";
 		if (channelNum == 6) {
@@ -282,6 +285,14 @@ void SkeletonNode::printTreeBVH(std::ostream& out, unsigned level) const {
 	// level was incremented
 	printRepeated(out, level-1, "\t");
 	out << "}" << std::endl;
+}
+
+// it is assumed that points coordinates in the frame of the parent of this node
+// for root this means world coordinates
+void SkeletonNode::getClosests(Point p, float minDist, std::vector<SkeletonNode> & closests) const {
+	// transform point so that bone is at (0,0)
+	p -= Point(offset->get(0), offset->get(1), offset->get(2));
+//	float pb = p.dot()
 }
 
 

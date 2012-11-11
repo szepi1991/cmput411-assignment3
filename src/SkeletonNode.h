@@ -10,11 +10,13 @@
 
 #include "ParseException.h"
 #include "Quaternion.h"
+#include "geometry.h"
 
 #include <string>
 #include <vector>
 #include <fstream>
 #include <boost/array.hpp>
+#include <boost/shared_ptr.hpp>
 
 class MotionFrame {
 	// these can't be const since they are put in a vector where the elements
@@ -72,20 +74,21 @@ private:
 
 	std::string name;
 	std::vector<SkeletonNode> children;
-	boost::array<float, 3> offset;
+	boost::shared_ptr<Point> offset;
+//	boost::array<float, 3> offset;
 	unsigned channelNum;
 	std::vector<MotionFrame> motion;
 
 public:
 	SkeletonNode(std::ifstream& descr) throw(ParseException);
-	SkeletonNode(boost::array<float, 3> const &);
+	SkeletonNode(boost::shared_ptr<Point> const & offsets);
 	virtual ~SkeletonNode();
 	std::string getDescr() const;
 
 	void printNames(unsigned level) const;
 	void display(double) const;
 	void addAnimationFrame(std::ifstream& descr);
-	boost::array<float, 3> getEndPoint() const throw(int);
+	const boost::shared_ptr<Point> getEndPoint() const throw(int);
 
 	void printTreeBVH(std::ostream& out, unsigned level) const;
 	void printFrameBVH(std::ostream& out, unsigned frame) const {
@@ -96,6 +99,8 @@ public:
 			it->printFrameBVH(out, frame);
 		}
 	}
+
+	void getClosests(Point p, float minDist, std::vector<SkeletonNode> & closests) const;
 
 	// enlarges the axis-aligned box defined by the parameters so that each translated
 	// point fits into the box

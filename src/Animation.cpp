@@ -24,7 +24,6 @@
 //#endif
 
 
-
 Animation::Animation(char *filename) throw(ParseException) : figureSize(0) {
 
 	std::ifstream infile(filename);
@@ -175,7 +174,13 @@ void Animation::outputBVH(std::ostream& out) {
 void Animation::attachBones(Mesh const& model) const {
 	// first version: for each vertex find the closest bone
 	// -- if k tie for closest, then assign 1/k to each
-
+	const Point * vertex;
+	unsigned vNum = 0;
+	while (vertex = model.getVertex(vNum), vertex != NULL) {
+		vNum++;
+		std::vector<SkeletonNode> closests;
+		roots[0].getClosests(Point(*vertex), std::numeric_limits<float>::max(), closests);
+	}
 }
 
 

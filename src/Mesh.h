@@ -27,6 +27,13 @@ public:
 	void display() const;
 	void printMesh(std::ostream& out) const;
 	virtual ~Mesh();
+
+	// return NULL if bad index.
+	// TODO note that we should use shared_ptr instead..
+	const Point * getVertex(unsigned ind) const {
+		if (ind < 0 || ind >= vertices.size()) return NULL;
+		return &vertices[ind];
+	}
 };
 
 #endif /* MESH_H_ */
