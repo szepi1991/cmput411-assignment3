@@ -23,6 +23,9 @@
 Camera::Camera() {
 	near = 3.0f;
 	far = 150.0f;
+
+	turnSpeed = 5; // TODO change back to 10
+	moveSpeed = 0.5; // change back to 0.1
 //	reset();
 //	//set the default camera: looking at origin from +5 on z axis
 //	eyeXP = 8.0, eyeYP = 10.0, eyeZP = 15.0;
@@ -148,31 +151,31 @@ bool Camera::controlSpec(int key) {
 bool Camera::control(unsigned char key) {
 	switch (key) {
 	case 'I':
-		translateCamera(0, 0, 0.1);
+		translateCamera(0, 0, moveSpeed);
 		break;
 	case 'i':
-		translateCamera(0, 0, -0.1);
+		translateCamera(0, 0, -moveSpeed);
 		break;
 
 	case 't':
-		rotateCamera(-10.0, 1.0, 0.0, 0.0);
+		rotateCamera(-turnSpeed, 1.0, 0.0, 0.0);
 		break;
 	case 'T':
-		rotateCamera(10.0, 1.0, 0.0, 0.0);
+		rotateCamera(turnSpeed, 1.0, 0.0, 0.0);
 		break;
 
 	case 'a':
-		rotateCamera(-10.0, 0.0, 1.0, 0.0);
+		rotateCamera(-turnSpeed, 0.0, 1.0, 0.0);
 		break;
 	case 'A':
-		rotateCamera(10.0, 0.0, 1.0, 0.0);
+		rotateCamera(turnSpeed, 0.0, 1.0, 0.0);
 		break;
 
 	case 'c':
-		rotateCamera(-10.0, 0.0, 0.0, 1.0);
+		rotateCamera(-turnSpeed, 0.0, 0.0, 1.0);
 		break;
 	case 'C':
-		rotateCamera(10.0, 0.0, 0.0, 1.0);
+		rotateCamera(turnSpeed, 0.0, 0.0, 1.0);
 		break;
 
 	default:

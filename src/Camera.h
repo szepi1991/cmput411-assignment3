@@ -36,6 +36,9 @@ public:
 
 	float getNear() { return near; }
 	float getFar() { return far; }
+
+	float turnSpeed;
+	float moveSpeed;
 };
 
 #endif /* CAMERA_H_ */

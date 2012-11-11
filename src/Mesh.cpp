@@ -21,7 +21,7 @@ void Mesh::loadModel(char* modelFile) throw (ParseException) {
 	// each vertex is consecutive 3 coord
 	std::vector<float> vertexCoords; // translated and scaled
 
-	if (MYINFO) std::cout << "Loading " << modelFile << std::endl;
+	if (debug::ison(debug::LITTLE)) std::cout << "Loading " << modelFile << std::endl;
 	std::string line, lineType;
 	unsigned int vertex, normal;
 	float x, y, z;
@@ -38,13 +38,15 @@ void Mesh::loadModel(char* modelFile) throw (ParseException) {
 			ss >> lineType;
 			if (lineType.compare("v") == 0) {
 				ss >> x >> y >> z;
-				if (MYINFO) std::cout << "Created vertex " << x << " " << y << " " << z << std::endl;
+				if (debug::ison(debug::EVERYTHING))
+					std::cout << "Created vertex " << x << " " << y << " " << z << std::endl;
 				vertices.push_back(x);
 				vertices.push_back(y);
 				vertices.push_back(z);
 			} else if (lineType.compare("vn") == 0) {
 				ss >> x >> y >> z;
-				if (MYINFO) std::cout << "Created normal vector " << x << " " << y << " " << z << std::endl;
+				if (debug::ison(debug::EVERYTHING))
+					std::cout << "Created normal vector " << x << " " << y << " " << z << std::endl;
 				normalize(&x, &y, &z);
 				normals.push_back(x);
 				normals.push_back(y);
@@ -53,7 +55,7 @@ void Mesh::loadModel(char* modelFile) throw (ParseException) {
 
 				face oneFace;
 				std::string term;
-				if (MYINFO)
+				if (debug::ison(debug::EVERYTHING))
 					std::cout << "face ";
 //				std::cout << ss.str();
 				while (ss >> term) {
@@ -69,7 +71,7 @@ void Mesh::loadModel(char* modelFile) throw (ParseException) {
 					verStr >> vertex;
 					norStr >> normal;
 					vertex--; normal--; // uses 1 based indices..
-					if (MYINFO)
+					if (debug::ison(debug::EVERYTHING))
 						std::cout << "v" << vertex << " n" << normal << ", ";
 //					if (vertex*3 > vertices.size() || normal*3 > normals.size()) {
 					if (vertex*3 > vertices.size()) {
@@ -85,11 +87,11 @@ void Mesh::loadModel(char* modelFile) throw (ParseException) {
 					oneFace.push_back(std::make_pair(vertex, normal));
 				}
 				faces.push_back(oneFace);
-				if (MYINFO)
+				if (debug::ison(debug::EVERYTHING))
 					std::cout << std::endl;
 
 			} else {
-				if (MYINFO)
+				if (debug::ison(debug::EVERYTHING))
 					std::cout << "Ignoring line: " << line << std::endl;
 			}
 		}
@@ -101,9 +103,6 @@ void Mesh::loadModel(char* modelFile) throw (ParseException) {
 }
 
 void Mesh::printMesh(std::ostream& out) const {
-//	std::vector<float> vertices;
-//	std::vector<float> normals;
-//	std::vector<face> faces;
 	out << std::fixed;
 	out.precision(6);
 	for (std::vector<float>::const_iterator it = vertices.begin(); it != vertices.end();) {
@@ -131,6 +130,7 @@ void Mesh::printMesh(std::ostream& out) const {
 
 void Mesh::display() const {
 	for (std::vector<face>::const_iterator it = faces.begin(); it != faces.end(); ++it) {
+		glColor3f(1.0, 1.0, 1.0);
 		glBegin(GL_TRIANGLES);
 			for (unsigned vn = 0; vn < 3; ++vn) { // each face is a triangle
 				unsigned nI = (*it)[vn].second * 3;
@@ -139,6 +139,21 @@ void Mesh::display() const {
 				glVertex3f(vertices[vI+0], vertices[vI+1], vertices[vI+2]);
 			}
 		glEnd();
+		if (debug::ison(debug::EVERYTHING)) {
+			// now also draw the normals..
+			glColor3f(0.0, 0.0, 1.0);
+			for (unsigned vn = 0; vn < 3; ++vn) { // each face is a triangle
+				unsigned nI = (*it)[vn].second * 3;
+				unsigned vI = (*it)[vn].first * 3;
+				float x = vertices[vI+0];
+				float y = vertices[vI+1];
+				float z = vertices[vI+2];
+				glBegin(GL_LINES);
+					glVertex3f(x, y, z);
+					glVertex3f(x+normals[nI+0], y+normals[nI+1], z+normals[nI+2]);
+				glEnd();
+			}
+		}
 	}
 }
 

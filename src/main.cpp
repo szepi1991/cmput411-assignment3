@@ -11,7 +11,6 @@
 #  include <GL/glut.h>
 #endif
 
-
 #include <iostream>
 #include <boost/shared_ptr.hpp>
 
@@ -25,11 +24,13 @@
 
 using namespace std;
 
-
 unsigned SkeletonNode::nodeCounter=0;
 static boost::shared_ptr<Animation> anim;
 static Camera cam;
 static Mesh model;
+static bool wireFrame = true;
+
+static float lightPos[] = { 0.0, 10.5, 13.0, 1.0 };
 
 static const unsigned SCR_WIDTH = 800, SCR_HEIGHT = 600;
 
@@ -40,7 +41,7 @@ void drawText(float x, float y, float z, char const *string) {
 	for (c = string; *c != '\0'; c++) { glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, *c); }
 }
 
-void setup(int argc, char **argv) throw (int) {
+void loadThings(int argc, char **argv) throw (int) {
 
 	if (argc != 3) {
 		cerr << "ERROR: this program takes exactly 2 argument: first a wavefront .obj file, then a .bvh file to load." << endl;
@@ -61,10 +62,6 @@ void setup(int argc, char **argv) throw (int) {
 		cam.makeVisible(xMin-extra, xMax+extra,
 				yMin-extra, yMax+extra, zMin-extra, zMax+extra);
 
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
-		gluPerspective(90, ((double)SCR_WIDTH)/((double)SCR_HEIGHT), cam.getNear(), cam.getFar());
-
 	} catch (ParseException& e) {
 		cerr << e.what() << endl;
 		throw 2;
@@ -75,7 +72,39 @@ void setup(int argc, char **argv) throw (int) {
 	cout << "- LITTLE is " << debug::ison(debug::LITTLE) << endl;
 	cout << "- DETAILED is " << debug::ison(debug::DETAILED) << endl;
 	cout << "- EVERYTHING is " << debug::ison(debug::EVERYTHING) << endl;
+}
 
+void graphicsSetup() {
+	// Set background (or clearing) color.
+	glClearColor(0.0, 0.0, 0.0, 0.0);
+	glEnable(GL_DEPTH_TEST); // Enable depth testing.
+
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	gluPerspective(90, ((double)SCR_WIDTH)/((double)SCR_HEIGHT), cam.getNear(), cam.getFar());
+
+	// Light property vectors.
+//	float globAmb[] = { 0.2, 0.2, 0.2, 1.0 };
+//	float globAmb[] = { 0.9, 0.9, 0.9, 1.0 };
+//	float lightAmb[] = { 0.0, 0.0, 0.0, 1.0 };
+	float lightAmb[] = { 0.5, 0.5, 0.5, 1.0 };
+//	float lightDifAndSpec[] = { 1.0, 1.0, 1.0, 1.0 };
+
+	// Light properties.
+	glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmb);
+//	glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDifAndSpec);
+//	glLightfv(GL_LIGHT0, GL_SPECULAR, lightDifAndSpec);
+
+	glEnable(GL_LIGHT0); // Enable particular light source.
+//	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, globAmb); // Global ambient light.
+	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE); // Enable two-sided lighting.
+	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE); // Enable local viewpoint.
+
+//	glShadeModel(GL_FLAT);
+	glShadeModel(GL_SMOOTH);
+	glEnable(GL_COLOR_MATERIAL);
+
+//	glCullFace(GL_BACK);
 }
 
 /* OpenGL window reshape routine.
@@ -115,8 +144,12 @@ void drawAxes(float length) {
 void drawScene(void)
 {
 	// Clear screen to background color.
-	glClear(GL_COLOR_BUFFER_BIT);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	if (wireFrame)
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	else
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
@@ -135,9 +168,17 @@ void drawScene(void)
 	// Set stickman color.
 	glColor3f(1.0,1.0,0.1);
 	anim->display();
-	// wireframe
+
+	// mesh
 	glColor3f(1.0, 1.0, 1.0);
+	if (!wireFrame) {
+		glEnable(GL_LIGHTING);
+		glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
+		glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+//		glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, skinCol);
+	}
 	model.display();
+	glDisable(GL_LIGHTING);
 
 	glutSwapBuffers();
 }
@@ -162,6 +203,18 @@ void keyInput(unsigned char key, int x, int y) {
 		break;
 	case '-':
 		anim->addFPS(-10);
+		break;
+	case 'l':
+		wireFrame = true;
+		glDisable(GL_CULL_FACE);
+//		glDisable(GL_LIGHTING);
+//		glDisable(GL_COLOR_MATERIAL);
+		break;
+	case 'L':
+		wireFrame = false;
+		glEnable(GL_CULL_FACE);
+//		glEnable(GL_LIGHTING);
+//		glEnable(GL_COLOR_MATERIAL);
 		break;
 	case 'w':
 	{
@@ -197,24 +250,6 @@ void doWhenIdle() {
 
 
 void testCode() {
-
-
-	vector<unsigned> vec;
-	for (unsigned i = 1; i < 10; i++) {
-		vec.push_back(i);
-	}
-
-	for (vector<unsigned>::iterator it = vec.begin(); it != vec.end(); ++it) {
-		cout << *it;
-	}
-	cout << endl;
-
-	for (vector<unsigned>::iterator it = vec.begin(); it != vec.end(); ) {
-//		cout << "v " << *(it++) << " " << *(it++)  << " " << *(it++) << std::endl;
-		cout << "v " << *(it++);
-		cout << " " << *(it++);
-		cout << " " << *(it++) << std::endl;
-	}
 
 //	float a, b, c;
 //	a = b = c = 0.3;
@@ -258,20 +293,19 @@ int main(int argc, char **argv) {
 //	return 0;
 
 	glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
 	glutInitWindowSize(800, 600);
 	glutInitWindowPosition(100, 100);
 	glutCreateWindow("box.cpp");
 
-	// Set background (or clearing) color.
-	glClearColor(0.0, 0.0, 0.0, 0.0);
 	// Initialize.
 	try {
-		setup(argc, argv);
+		loadThings(argc, argv);
 	} catch (int e) {
 		cerr << "The program is going to terminate now." << endl;
 		return 1;
 	}
+	graphicsSetup();
 
 	glutDisplayFunc(drawScene);
 	glutReshapeFunc(resize);
