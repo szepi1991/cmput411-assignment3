@@ -42,13 +42,13 @@ public:
 		}
 	}
 
-	// TODO this is not suggested apparently.. but we'll see
-	std::ostream& operator<<(std::ostream& os) {
-		os << "(" << mx << ", " << my << ", " << mz << ")";
-		return os;
-	}
+	friend std::ostream& operator<< (std::ostream &out, Point const& Point);
 };
 
+inline std::ostream& operator<<(std::ostream& os, const Point& pt) {
+	os << "(" << pt.mx << ", " << pt.my << ", " << pt.mz << ")";
+	return os;
+}
 
 
 #endif /* GEOMETRY_H_ */

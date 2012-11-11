@@ -52,7 +52,7 @@ public:
 	std::string getFileName() {return filename;}
 	double getStdFrameTime() {return stdFrameTime;}
 	float getVirtualFPS() { return virtFPS; }
-	void display();
+	void display(unsigned);
 	void addToTime(double timediff);
 
 	void startAnim() {

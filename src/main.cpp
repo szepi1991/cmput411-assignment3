@@ -25,6 +25,7 @@
 using namespace std;
 
 unsigned SkeletonNode::nodeCounter=0;
+unsigned selectedNode = 0;
 static boost::shared_ptr<Animation> anim;
 static Camera cam;
 static Mesh model;
@@ -72,6 +73,10 @@ void loadThings(int argc, char **argv) throw (int) {
 	cout << "- LITTLE is " << debug::ison(debug::LITTLE) << endl;
 	cout << "- DETAILED is " << debug::ison(debug::DETAILED) << endl;
 	cout << "- EVERYTHING is " << debug::ison(debug::EVERYTHING) << endl;
+}
+
+void computeAttachments() {
+	anim->attachBones(model);
 }
 
 void graphicsSetup() {
@@ -167,7 +172,7 @@ void drawScene(void)
 
 	// Set stickman color.
 	glColor3f(1.0,1.0,0.1);
-	anim->display();
+	anim->display(selectedNode);
 
 	// mesh
 	glColor3f(1.0, 1.0, 1.0);
@@ -186,6 +191,16 @@ void drawScene(void)
 
 void keyInput(unsigned char key, int x, int y) {
 	switch (key) {
+	// -- testing starts
+	case ',':
+		// FIXME will need to renumber nodes and stuff ... to be like online!
+		selectedNode = (selectedNode == 0) ? SkeletonNode::getNumberOfNodes() : selectedNode-1;
+		break;
+	case '.':
+		selectedNode++;
+		if (selectedNode > SkeletonNode::getNumberOfNodes()) selectedNode = 0;
+		break;
+	// -- testing over
 	case 'q':
 		exit(0);
 		break;
@@ -306,6 +321,7 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 	graphicsSetup();
+	computeAttachments();
 
 	glutDisplayFunc(drawScene);
 	glutReshapeFunc(resize);

@@ -172,6 +172,16 @@ void Animation::outputBVH(std::ostream& out) {
 /** calculates an attachment to the bones of the specified model.
  * Note: here we assume there's one root only. */
 void Animation::attachBones(Mesh const& model) const {
+
+	std::vector<SkeletonNode> closests;
+	roots[0].getClosestBones(Point(0,0,0), std::numeric_limits<float>::max(), closests);
+	std::cout << "Closest bones are:";
+	for (std::vector<SkeletonNode>::iterator it = closests.begin(); it != closests.end(); ++it) {
+		std::cout << " " << it->getDescr();
+	}
+	std::cout << std::endl;
+	return;
+
 	// first version: for each vertex find the closest bone
 	// -- if k tie for closest, then assign 1/k to each
 	const Point * vertex;
@@ -179,13 +189,14 @@ void Animation::attachBones(Mesh const& model) const {
 	while (vertex = model.getVertex(vNum), vertex != NULL) {
 		vNum++;
 		std::vector<SkeletonNode> closests;
-		roots[0].getClosests(Point(*vertex), std::numeric_limits<float>::max(), closests);
+		roots[0].getClosestBones(Point(*vertex), std::numeric_limits<float>::max(), closests);
 	}
 }
 
 
 // displays the current frame (that has been already calculated from curTime)
-void Animation::display() {
+// selectedbone is going to be drawn with red
+void Animation::display(unsigned selectedbone = -1) {
 
     glLineWidth(WIDTH);
 
@@ -197,7 +208,7 @@ void Animation::display() {
 
 //	if (MYINFO) std::cout << "Drawing Frame " << curFrameFrac << std::endl;
 	for (unsigned i = 0; i < roots.size(); ++i)
-		roots[i].display(curFrameFrac);
+		roots[i].display(curFrameFrac, selectedbone);
 
     glLineWidth(1); // assume it's 1 by def
 
