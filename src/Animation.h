@@ -11,7 +11,6 @@
 #include <string>
 #include <vector>
 #include <boost/shared_ptr.hpp>
-//#include <boost/date_time/posix_time/posix_time_types.hpp>
 
 #ifdef __APPLE__
 #  include <GLUT/glut.h>
@@ -21,6 +20,7 @@
 
 
 #include "SkeletonNode.h"
+#include "Mesh.h"
 #include "ParseException.h"
 
 class Animation {
@@ -71,6 +71,8 @@ public:
 	void outputBVH(std::ostream&);
 	void closestFit(float&, float&, float&, float&, float&, float&);
 	float getFigureSizeBox();
+
+	void attachBones(Mesh const& model) const;
 };
 
 #endif /* ANIMATION_H_ */

@@ -10,16 +10,17 @@
 
 #include <vector>
 #include "tools.h"
+#include "geometry.h"
 
 // each face is a list of vertices//normal pairs
 // Note that the number specified --> 3*num in the vertices and normals vectors
-typedef std::vector< std::pair< unsigned, unsigned> > face ;
+typedef std::vector< std::pair< unsigned, unsigned> > Face;
 
 class Mesh {
 private:
-	std::vector<float> vertices;
-	std::vector<float> normals;
-	std::vector<face> faces;
+	std::vector<Point> vertices;
+	std::vector<Point> normals;
+	std::vector<Face> faces;
 public:
 	Mesh() {};
 	void loadModel(char* inputfile) throw (ParseException);

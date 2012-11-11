@@ -40,20 +40,22 @@ void Mesh::loadModel(char* modelFile) throw (ParseException) {
 				ss >> x >> y >> z;
 				if (debug::ison(debug::EVERYTHING))
 					std::cout << "Created vertex " << x << " " << y << " " << z << std::endl;
-				vertices.push_back(x);
-				vertices.push_back(y);
-				vertices.push_back(z);
+				vertices.push_back(Point(x, y, z));
+//				vertices.push_back(x);
+//				vertices.push_back(y);
+//				vertices.push_back(z);
 			} else if (lineType.compare("vn") == 0) {
 				ss >> x >> y >> z;
 				if (debug::ison(debug::EVERYTHING))
 					std::cout << "Created normal vector " << x << " " << y << " " << z << std::endl;
 				normalize(&x, &y, &z);
-				normals.push_back(x);
-				normals.push_back(y);
-				normals.push_back(z);
+				normals.push_back(Point(x, y, z));
+//				normals.push_back(x);
+//				normals.push_back(y);
+//				normals.push_back(z);
 			} else if (lineType.compare("f") == 0) {
 
-				face oneFace;
+				Face oneFace;
 				std::string term;
 				if (debug::ison(debug::EVERYTHING))
 					std::cout << "face ";
@@ -74,13 +76,15 @@ void Mesh::loadModel(char* modelFile) throw (ParseException) {
 					if (debug::ison(debug::EVERYTHING))
 						std::cout << "v" << vertex << " n" << normal << ", ";
 //					if (vertex*3 > vertices.size() || normal*3 > normals.size()) {
-					if (vertex*3 > vertices.size()) {
+					if (vertex > vertices.size() || normal > normals.size()) {
 						std::stringstream ss;
-						ss
-								<< "__ The face '" 	<< line
+						ss		<< std::endl
+								<< "__ The face '" << std::endl << "\t" << line
 								<< "' is referencing vertex " << vertex
 								<< "and normal " << normal
-								<< ", on of which has not been defined yet. __"
+								<< ", one of which has not been defined yet. (normals="
+								<< normals.size() << ", vertices="
+								<< vertices.size() << ") __"
 								<< std::endl;
 						throw ParseException("", ss.str());
 					}
@@ -105,18 +109,14 @@ void Mesh::loadModel(char* modelFile) throw (ParseException) {
 void Mesh::printMesh(std::ostream& out) const {
 	out << std::fixed;
 	out.precision(6);
-	for (std::vector<float>::const_iterator it = vertices.begin(); it != vertices.end();) {
-		out << "v " << *(it++);
-		out << " " << *(it++);
-		out << " " << *(it++) << std::endl;
+	for (std::vector<Point>::const_iterator it = vertices.begin(); it != vertices.end(); ++it) {
+		out << "v " << it->x() << " " << it->y() << " " << it->z() << std::endl;
 	}
-	for (std::vector<float>::const_iterator it = normals.begin(); it != normals.end();) {
-		out << "vn " << *(it++);
-		out << " " << *(it++);
-		out << " " << *(it++) << std::endl;
+	for (std::vector<Point>::const_iterator it = normals.begin(); it != normals.end(); ++it) {
+		out << "v " << it->x() << " " << it->y() << " " << it->z() << std::endl;
 	}
 
-	for (std::vector<face>::const_iterator it = faces.begin(); it != faces.end(); ++it) {
+	for (std::vector<Face>::const_iterator it = faces.begin(); it != faces.end(); ++it) {
 		out << "f";
 		// std::vector< std::pair<unsigned, unsigned> >
 		for (unsigned i = 0; i < it->size(); ++i) {
@@ -129,28 +129,25 @@ void Mesh::printMesh(std::ostream& out) const {
 
 
 void Mesh::display() const {
-	for (std::vector<face>::const_iterator it = faces.begin(); it != faces.end(); ++it) {
+	for (std::vector<Face>::const_iterator it = faces.begin(); it != faces.end(); ++it) {
 		glColor3f(1.0, 1.0, 1.0);
 		glBegin(GL_TRIANGLES);
 			for (unsigned vn = 0; vn < 3; ++vn) { // each face is a triangle
-				unsigned nI = (*it)[vn].second * 3;
-				unsigned vI = (*it)[vn].first * 3;
-				glNormal3f(normals[nI+0], normals[nI+1], normals[nI+2]);
-				glVertex3f(vertices[vI+0], vertices[vI+1], vertices[vI+2]);
+				Point n = normals[(*it)[vn].second];
+				Point v = vertices[(*it)[vn].first];
+				glNormal3f(n.x(), n.y(), n.z());
+				glVertex3f(v.x(), v.y(), v.z());
 			}
 		glEnd();
 		if (debug::ison(debug::EVERYTHING)) {
 			// now also draw the normals..
 			glColor3f(0.0, 0.0, 1.0);
 			for (unsigned vn = 0; vn < 3; ++vn) { // each face is a triangle
-				unsigned nI = (*it)[vn].second * 3;
-				unsigned vI = (*it)[vn].first * 3;
-				float x = vertices[vI+0];
-				float y = vertices[vI+1];
-				float z = vertices[vI+2];
+				Point n = normals[(*it)[vn].second];
+				Point v = vertices[(*it)[vn].first];
 				glBegin(GL_LINES);
-					glVertex3f(x, y, z);
-					glVertex3f(x+normals[nI+0], y+normals[nI+1], z+normals[nI+2]);
+					glVertex3f(v.x(), v.y(), v.z());
+					glVertex3f(v.x()+n.x(), v.y()+n.y(), v.z()+n.z());
 				glEnd();
 			}
 		}

@@ -170,6 +170,15 @@ void Animation::outputBVH(std::ostream& out) {
 	}
 }
 
+/** calculates an attachment to the bones of the specified model.
+ * Note: here we assume there's one root only. */
+void Animation::attachBones(Mesh const& model) const {
+	// first version: for each vertex find the closest bone
+	// -- if k tie for closest, then assign 1/k to each
+
+}
+
+
 // displays the current frame (that has been already calculated from curTime)
 void Animation::display() {
 
