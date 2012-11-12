@@ -20,6 +20,12 @@ make
 4. For calculating the initial viewing position I make the assumption that only ROOT's have translation transformations.
 5. When outputting the .obj file, I output the normalized normals.
 6. Each face is in the .obj model is a triangle.
+7. While closest bone to vertex should intuitively be:
+	argmin_{bone b} ( inf_{line l connecting a point of b to v, not crossing any faces} (length of l) )
+This is hard to calculate and so i do
+argmin_{bone b, the line segment l joining closest point of b with v does not cross any faces} ( length of l )
+as suggested in the notes.
+
 
 --------------------
 Developed by David Szepesvari. Started November 8, 2012.

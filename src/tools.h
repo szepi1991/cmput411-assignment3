@@ -30,9 +30,10 @@
 #define sqr(x) (x*x)
 
 
+// TODO optimize this perhaps..
 namespace debug {
 	enum InfoLevel {NONE, LITTLE, DETAILED, EVERYTHING};
-	static InfoLevel level = DETAILED;
+	static const InfoLevel level = DETAILED;
 	inline bool ison(InfoLevel a) {
 		return ((unsigned) level >= (unsigned) a );
 	}

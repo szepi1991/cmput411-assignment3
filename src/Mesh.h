@@ -24,6 +24,9 @@ private:
 	std::vector<Point> normals;
 	std::vector<Face> faces;
 
+	// for speeding things up
+	std::vector<Triangle> facesTr;
+
 	// optional
 	boost::shared_ptr< std::set<unsigned> > selected;
 public:
@@ -35,6 +38,14 @@ public:
 	unsigned getNumVertices() const { return vertices.size(); }
 	void setSelectedVerts(boost::shared_ptr< std::set<unsigned> > const& sel) {
 		selected = sel;
+	}
+
+	bool intersects(LineSegment const & l) const {
+		for (std::vector<Triangle>::const_iterator it = facesTr.begin();
+								it != facesTr.end(); ++it) {
+			if (intersectLineSegWithTriangle(l, *it)) return true;
+		}
+		return false;
 	}
 
 	// return NULL if bad index. TODO note that we should use shared_ptr instead..

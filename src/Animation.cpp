@@ -66,6 +66,11 @@ Animation::Animation(char *filename) throw(ParseException) : figureSize(0), sele
 	}
 	infile.close();
 
+	for (std::vector<SkeletonNode>::iterator rootIt = roots.begin();
+										rootIt != roots.end(); ++rootIt) {
+		rootIt->setWorldOffsetRec(Point());
+	}
+
 	std::cout << "Finished." << std::endl;
 	this->filename = filename;
 	animating = false;
@@ -162,29 +167,47 @@ void Animation::outputBVH(std::ostream& out) {
 }
 
 /** calculates an attachment to the bones of the specified model.
- * Note: here we assume there's one root only. */
-void Animation::simpleAttachBones() {
+ * Note: here we assume there's one root only.
+ *
+ * visible == true iff when looking for closest bone we only count the visible ones!
+ */
+void Animation::simpleAttachBones(bool visible) {
 
 	typedef Eigen::Triplet<double> Tr;
 	std::vector<Tr> tripletList;
 	unsigned numVert = model->getNumVertices();
 	tripletList.reserve(numVert*2);
 
+	// null model
+	boost::shared_ptr<Mesh> nullM;
+
+	if (debug::ison(debug::LITTLE)) std::cout << "verts=" << numVert << ": ";
+
 	// first version: for each vertex find the closest bone
 	// -- if k tie for closest, then assign 1/k to each
 	const Point * vertex;
 	unsigned vNum = 0;
+
 	while (vertex = model->getVertex(vNum), vertex != NULL) {
+		if (debug::ison(debug::LITTLE)) {
+			std::cout << vNum << " ";
+			std::flush(std::cout);
+		}
 		std::vector<SkeletonNode> closests;
 		float temp = std::numeric_limits<float>::max();
 		if (debug::ison(debug::EVERYTHING))
-			std::cout << "+ Studing point " << vNum << " that is " << *vertex << std::endl;
-		roots[0].getClosestBones(Point(*vertex), temp, closests);
+			std::cout << "+ Studying point " << vNum << " that is " << *vertex << std::endl;
+		if (!visible) {
+			roots[0].getClosestBones(Point(*vertex), temp, closests, nullM);
+		} else {
+			roots[0].getClosestBones(Point(*vertex), temp, closests, model);
+		}
 		for (std::vector<SkeletonNode>::const_iterator it = closests.begin(); it != closests.end(); ++it) {
 			tripletList.push_back(Tr(vNum, it->getUpperBoneNum(), 1/double(closests.size()) ));
 		}
 		vNum++;
 	}
+	if (debug::ison(debug::LITTLE)) std::cout << std::endl;
 
 	if (debug::ison(debug::EVERYTHING)) {
 		std::cout << "num of triplets: " << tripletList.size() << std::endl;
@@ -195,22 +218,34 @@ void Animation::simpleAttachBones() {
 		}
 	}
 
-	simpleConMat.resize(numVert, SkeletonNode::getNumberOfNodes());
-	simpleConMat.reserve(tripletList.size()*1.5);
-	simpleConMat.setFromTriplets(tripletList.begin(), tripletList.end());
+	if (!visible) {
+		simpleConMat.resize(numVert, SkeletonNode::getNumberOfNodes());
+		simpleConMat.reserve(tripletList.size()*1.5);
+		simpleConMat.setFromTriplets(tripletList.begin(), tripletList.end());
+	} else {
+		visConMat.resize(numVert, SkeletonNode::getNumberOfNodes());
+		visConMat.reserve(tripletList.size()*1.5);
+		visConMat.setFromTriplets(tripletList.begin(), tripletList.end());
+	}
 }
 
-void Animation::updateMeshSelected() {
+void Animation::updateMeshSelected(AttMatr mType) {
 	if (model) {
 		// want all the i's st (i, selectedBone) is nonzero in simpleConMat
 		boost::shared_ptr< std::set<unsigned> > sel( new std::set<unsigned> );
-
-		// not fast way:
-		for (int row = 0; row < simpleConMat.rows(); ++row) {
-			if (simpleConMat.coeff(row, selectedBone) != 0) sel->insert((unsigned) row);
+		Eigen::SparseMatrix<double>* matToUse;
+		switch (mType) {
+		case SIMPLE_M: matToUse = &simpleConMat; break;
+		case VISIBLE_M: matToUse = &visConMat; break;
+		default: throw(0);
 		}
 
-		if (debug::ison(debug::DETAILED)) {
+		// not fast way:
+		for (int row = 0; row < matToUse->rows(); ++row) {
+			if (matToUse->coeff(row, selectedBone) != 0) sel->insert((unsigned) row);
+		}
+
+		if (debug::ison(debug::EVERYTHING)) {
 			std::cout << sel->size() << " vertices attached to current bone. These are" << std::endl;
 			for (std::set<unsigned>::const_iterator it = sel->begin();
 													it != sel->end(); ++it) {
@@ -221,14 +256,21 @@ void Animation::updateMeshSelected() {
 	}
 }
 
-void Animation::printSimpleAttachedMatrix(std::ostream& out) const throw(WrongStateException) {
+void Animation::printAttachedMatrix(std::ostream& out, AttMatr mType) const throw(WrongStateException) {
 	if (!model)
-		throw WrongStateException("Tried to print the simple attached matrix before setting a model for the skeleton");
+		throw WrongStateException("Tried to print the attached matrix before setting a model for the skeleton");
 
 	for (unsigned v = 0; v < model->getNumVertices(); ++v) {
-		printSparseRow(out, simpleConMat, v);
-//		Eigen::SparseInnerVectorSet<float> curRow;
-//		out << v << " " << simpleConMat.row(v);
+		switch (mType) {
+		case SIMPLE_M:
+			printSparseRow(out, simpleConMat, v);
+			break;
+		case VISIBLE_M:
+			printSparseRow(out, visConMat, v);
+			break;
+		default:
+			throw 0;
+		}
 	}
 }
 

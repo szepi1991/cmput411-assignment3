@@ -9,6 +9,14 @@
 #define GEOMETRY_H_
 
 #include <cmath>
+#include <Eigen/Dense>
+
+#include "tools.h"
+
+class Triangle;
+class Point;
+class Sphere;
+class LineSegment;
 
 class Point {
 private:
@@ -16,10 +24,13 @@ private:
 public:
 	Point (float x, float y, float z) : mx(x), my(y), mz(z) {};
 	Point (Point const& o) : mx(o.mx), my(o.my), mz(o.mz) {};
-	Point () {};
+	Point (Eigen::Vector3f const & p) : mx(p(0,0)), my(p(1,0)), mz(p(2,0)) {};
+	// makes 0 point
+	Point () : mx(0), my(0), mz(0) {};
 	float x() const {return mx;}
 	float y() const {return my;}
 	float z() const {return mz;}
+	virtual ~Point() {};
 
 	Point & operator*=(float a) { mx*=a; my*=a; mz*=a; return *this; }
 	const Point operator*(float a) const { return Point(*this) *= a; }
@@ -42,7 +53,8 @@ public:
 		}
 	}
 
-	friend std::ostream& operator<< (std::ostream &out, Point const& Point);
+	friend bool intersectLineSegWithTriangle(LineSegment const & l, Triangle const & t);
+	friend std::ostream& operator<< (std::ostream &out, Point const& pt);
 };
 
 inline std::ostream& operator<<(std::ostream& os, const Point& pt) {
@@ -50,5 +62,163 @@ inline std::ostream& operator<<(std::ostream& os, const Point& pt) {
 	return os;
 }
 
+class Sphere {
+private:
+	Point c;
+	float radSqr;
+public:
+	Sphere(Point const& center, float radSq) : c(center), radSqr(radSq) {};
+	virtual ~Sphere() {};
+	// if it returns false, they don't intersect. That's all we guarantee!
+	bool intersects(Sphere const& o) const {
+		return ((c-o.c).getLengthSqr() > (radSqr+o.radSqr));
+	}
+};
+
+class LineSegment {
+private:
+	Point p0, d;
+public:
+	// if endpoints == true, e1 and e2 are taken to be the endpoints of the line segment.
+	// If it's false, then e1 is the translation to one endpoint, e2 is the
+	// direction and length of the segment
+	LineSegment(Point const& e1, Point const& e2, bool endPoints = true) {
+		if (endPoints) {
+			p0 = e1;
+			d = e2-e1;
+		} else {
+			p0 = e1;
+			d = e2;
+		}
+	};
+	virtual ~LineSegment() {};
+	friend bool intersectLineSegWithTriangle(LineSegment const & l, Triangle const & t);
+	friend std::ostream& operator<< (std::ostream &out, LineSegment const& l);
+	// always recalculate..
+	Sphere getBoundSphere() const { return Sphere(p0, d.getLengthSqr()); }
+};
+
+inline std::ostream& operator<< (std::ostream &out, LineSegment const& l) {
+	out <<  "L[" << l.p0 << "," << l.d << "]";
+	return out;
+}
+
+class Triangle {
+private:
+	Point v1, v2, v3;
+	Sphere bounding;
+public:
+	Triangle(Point const& e1, Point const& e2, Point const& e3) :
+		v1(e1), v2(e2), v3(e3), bounding(v1, (v1-v2).getLengthSqr()+(v2-v3).getLengthSqr()) {};
+	virtual ~Triangle() {};
+	friend bool intersectLineSegWithTriangle(LineSegment const & l, Triangle const & t);
+	friend std::ostream& operator<< (std::ostream &out, Triangle const& t);
+	Sphere const& getBoundSphere() const {return bounding;}
+};
+
+inline std::ostream& operator<< (std::ostream &out, Triangle const& t) {
+	out <<  "T[" << t.v1 << "," << t.v2 << ", " << t.v3 << "]";
+	return out;
+}
+
+
+
+namespace interSectMatr {
+	static Eigen::Matrix3f A;
+	static Eigen::Matrix3f Ainv;
+	static Eigen::Vector3f b;
+	static Eigen::Vector3f x;
+	static bool invertable;
+}
+
+inline bool intersectLineSegWithTriangle(LineSegment const & l, Triangle const & t) {
+	if (!l.getBoundSphere().intersects(t.getBoundSphere())) return false;
+
+	Point col1 = t.v1-t.v2, col2 = t.v1-t.v3;
+//	interSectMatr::A << col1.mx, col1.my, col1.mz,
+//			col2.mx, col2.my, col2.mz,
+//			l.d.mx, l.d.my, l.d.mz;
+//	// actual matrix is transpose of this!!!
+//	interSectMatr::A.transposeInPlace();
+	interSectMatr::A << col1.mx, col2.mx, l.d.mx,
+			col1.my, col2.my, l.d.my,
+			col1.mz, col2.mz, l.d.mz;
+
+	interSectMatr::A.computeInverseWithCheck(interSectMatr::Ainv, interSectMatr::invertable);
+	if (!interSectMatr::invertable) return false;
+
+	col1 = t.v1-l.p0;
+	interSectMatr::b << col1.mx, col1.my, col1.mz;
+	interSectMatr::x = interSectMatr::Ainv * interSectMatr::b;
+
+	// let x = [b, g, l]. Then intersects iff
+	// 0 <= b, g. b+g <= 1. 0 < l < 1
+	return (interSectMatr::x(0, 0) >= 0 && interSectMatr::x(1,0) >= 0 &&
+			interSectMatr::x(0,0) + interSectMatr::x(1,0) <= 1 &&
+			0 < interSectMatr::x(2,0) && interSectMatr::x(2,0) < 1 );
+}
+
+
+//inline bool intersectLineSegWithTriangle(LineSegment const & l, Triangle const & t) {
+////	if (debug::ison(debug::EVERYTHING))
+////		std::cout << "intersecting " << l << " with " << t << ". Formed matrix is:" << std::endl;
+//	Point col1 = t.v1-t.v2, col2 = t.v1-t.v3;
+//	Eigen::Matrix3f A; // = Eigen::Matrix3f::Zero();
+//	A << col1.mx, col1.my, col1.mz.
+//			col2.mx, col2.my, col2.mz,
+//			l.d.mx(), l.d.my(), l.d.mz;
+//	// actual matrix is transpose of this!!!
+//
+////	if (debug::ison(debug::EVERYTHING))
+////		std::cout << "A=" << std::endl << A << std::endl;
+//
+//	if (std::abs(A.determinant()) < EPS) {
+////		if (debug::ison(debug::EVERYTHING))
+////			std::cout << "--> Determinant 0." << std::endl;
+//		return false;
+//	}
+//	// since det of trans(A) = A, we can do it now
+//	A.transposeInPlace();
+//
+//	Eigen::Vector3f b;
+//	col1 = t.v1-l.p0;
+//	b << col1.mx, col1.my, col1.mz;
+//
+////	if (debug::ison(debug::EVERYTHING))
+////		std::cout << "b=" << std::endl << b << std::endl;
+//
+//
+//	Eigen::Vector3f x = A.partialPivLu().solve(b);
+////	Eigen::Vector3f x = A.colPivHouseholderQr().solve(b);
+//	// let x = [b, g, l]. Then intersects iff
+//	// 0 <= b, g. b+g <= 1. 0 < l < 1
+////	if (debug::ison(debug::EVERYTHING)) {
+////		std::cout << "intersection resulted in parameters:" << std::endl
+////				<< "\tBeta=" << x(0,0) << ", Gamma=" << x(1,0) << ", Lambda=" << x(2, 0) << std::endl;
+////	}
+//	return (x(0, 0) >= 0 && x(1,0) >= 0 && x(0,0)+x(1,0) <= 1
+//			&& 0 < x(2,0) && x(2,0) < 1 );
+//}
+
+inline void testLineSegWithTriangleIntersection() {
+
+	Triangle t(Point(-1, -1, 0), Point(1, -1, 0), Point(0, 1, 0));
+
+	LineSegment l(Point(-12, 3, 0), Point(0,0, 0));
+	assert( !intersectLineSegWithTriangle(l, t) ); // in same plane
+
+	l = LineSegment(Point(-1, -1, -1), Point(1, 1, 1));
+	assert( intersectLineSegWithTriangle(l, t) ); // through (0,0,0)
+
+	l = LineSegment(Point(-3, -3, -1), Point(-2, -2, 1));
+	assert( !intersectLineSegWithTriangle(l, t) ); // too far
+
+	l = LineSegment(Point(-1, -1, -1), Point(0, 0, 1));
+	assert( intersectLineSegWithTriangle(l, t) ); // ??
+
+	l = LineSegment(Point(3, 2, -1), Point(1, 1, 1));
+	assert( !intersectLineSegWithTriangle(l, t) ); // too far
+}
 
 #endif /* GEOMETRY_H_ */
+

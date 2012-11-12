@@ -12,6 +12,7 @@
 #include <vector>
 #include <boost/shared_ptr.hpp>
 #include <Eigen/Sparse>
+#include <ctime>
 
 #ifdef __APPLE__
 #  include <GLUT/glut.h>
@@ -49,10 +50,14 @@ private:
 	int selectedBone;
 
 	// matricies for skin-bone attachment
-	boost::shared_ptr<Mesh> model;
+	boost::shared_ptr<Mesh> model; // TODO should be const Mesh??
 	Eigen::SparseMatrix<double> simpleConMat;
+	Eigen::SparseMatrix<double> visConMat;
 
 public:
+
+	enum AttMatr {SIMPLE_M, VISIBLE_M};
+
 	Animation(char *filename) throw(ParseException);
 	virtual ~Animation();
 
@@ -85,25 +90,32 @@ public:
 	}
 
 	void setModel(boost::shared_ptr<Mesh> const & m) {
+		time_t start,end;
 		model = m;
 		std::cout << "Attaching model to skeleton.." << std::endl;
-		simpleAttachBones();
-		std::cout << "* simple attachment calculated" << std::endl;
+
+		time (&start);
+		simpleAttachBones(false);
+		time (&end);
+		std::cout << "* simple attachment calculated in " << difftime(end,start) << "s" << std::endl;
+		time (&start);
+		simpleAttachBones(true);
+		time (&end);
+		std::cout << "* visible attachment calculated in " << difftime(end,start) << "s" << std::endl;
 	}
-	void printSimpleAttachedMatrix(std::ostream& out) const throw(WrongStateException);
-	void updateMeshSelected();
+	void printAttachedMatrix(std::ostream& out, AttMatr mType) const throw(WrongStateException);
 
 	void selectNextBone() {
 		selectedBone++;
 		if (selectedBone+1 >= (int) SkeletonNode::getNumberOfNodes()) selectedBone = 0;
 		printSelectedBone();
-		updateMeshSelected();
+		updateMeshSelected(VISIBLE_M);
 	}
 	void selectPrevBone() {
 		selectedBone--;
 		if (selectedBone < 0) selectedBone = SkeletonNode::getNumberOfNodes()-2; // -1?
 		printSelectedBone();
-		updateMeshSelected();
+		updateMeshSelected(VISIBLE_M);
 	}
 	void printSelectedBone() {
 		if (debug::ison(debug::LITTLE)) {
@@ -113,7 +125,8 @@ public:
 		}
 	}
 private:
-	void simpleAttachBones();
+	void simpleAttachBones(bool visible);
+	void updateMeshSelected(AttMatr);
 
 };
 

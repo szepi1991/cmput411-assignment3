@@ -113,6 +113,9 @@ SkeletonNode::SkeletonNode(std::ifstream& descr) throw(ParseException) {
 		} else {
 			assert(false); // should be impossible
 		}
+		// can't set offset like this here yet, because the child will want to
+		// set its childs offset before its being set first
+		// BAD!!! (children.end()-1)->setWorldOffset(worldOffset);
 		descr >> token;
 	}
 
@@ -311,11 +314,22 @@ void SkeletonNode::printTreeBVH(std::ostream& out, unsigned level) const {
 	out << "}" << std::endl;
 }
 
+
+//void SkeletonNode::getClosestBones(Point p, float& minDist,
+//		std::vector<SkeletonNode> & closests) const {
+//	boost::shared_ptr<Mesh> n; // null pointer
+//	getClosestBones(p, minDist, closests, n);
+//}
+
 /**Returns the list of bones (identified by the end sites) that are closest
  * (within EPS distance) to the given point. The coordinates of p are given in
  * the frame of the parent of this node. For root this means world coordinates.
+ *
+ * if model is not NULL we only count visible connections
  */
-void SkeletonNode::getClosestBones(Point p, float& minDist, std::vector<SkeletonNode> & closests) const {
+// FIXME have to finish adding visible connection!!!! Needs world coordinates
+void SkeletonNode::getClosestBones(Point p, float& minDist,
+		std::vector<SkeletonNode> & closests, boost::shared_ptr<Mesh> const & model) const {
 	if (children.size() == 0) return;
 
 	// transform point so that bone is at (0,0)
@@ -329,13 +343,31 @@ void SkeletonNode::getClosestBones(Point p, float& minDist, std::vector<Skeleton
 														it != children.end(); ++it) {
 
 		boost::shared_ptr<Point> bone = it->offset;
+		Point closestPoint;
 		float pb = p.dot(*bone);
 		float dist;
-		if (pb <= 0) dist = p.getLength();
-		else if (pb >= bone->getLengthSqr()) dist = (p - *bone).getLength();
+
+		// if we only want to consider visible connections, need to test whether
+		// shortest line connecting bone to vertex crosses any faces. (see assumptions)
+
+		if (pb <= 0) {
+			// connection is from upperjoint to p
+			closestPoint = worldOffset;
+			dist = p.getLength();
+		}
+		else if (pb >= bone->getLengthSqr()) {
+			// connection is from lowerjoint to p
+			closestPoint = it->worldOffset;
+			dist = (p - *bone).getLength();
+		}
 		else {
 			Eigen::Vector3f v(p.x(),p.y(),p.z());
-			dist = std::sqrt(v.transpose()*(it->projToBoneM)*v);
+			Eigen::Vector3f delta = (it->projToBoneM)*v;
+
+			// connection is from projmatrix*p=delta (have to put it in world coords!) to p
+			closestPoint = Point(delta)+worldOffset;
+
+			dist = delta.squaredNorm(); // length
 		}
 
 		if (debug::ison(debug::EVERYTHING)) {
@@ -343,24 +375,28 @@ void SkeletonNode::getClosestBones(Point p, float& minDist, std::vector<Skeleton
 					<< ". Dist=" << dist;
 		}
 
-		if (std::abs(dist - minDist) < EPS) {
+		// if we it gets updated
+		if (dist < minDist + EPS) {
+			// make sure connecting line does not cross any faces
+			if (model && model->intersects(LineSegment(closestPoint, p, false))) continue;
+
+			if (debug::ison(debug::EVERYTHING))
+				std::cout << " *";
+			if (dist < minDist - EPS) {
+				closests.clear();
+				minDist = dist;
+				if (debug::ison(debug::EVERYTHING))
+					std::cout << "**";
+			}
 			closests.push_back(*it);
 			if (debug::ison(debug::EVERYTHING))
-				std::cout << " +";
-		} else if (dist < minDist) {
-			closests.clear();
-			closests.push_back(*it);
-			minDist = dist;
-			if (debug::ison(debug::EVERYTHING))
-				std::cout << " ***";
+				std::cout << std::endl;
 		}
-		if (debug::ison(debug::EVERYTHING))
-			std::cout << std::endl;
 	}
 
 	for (std::vector<SkeletonNode>::const_iterator it = children.begin();
 											it != children.end(); ++it) {
-		it->getClosestBones(p, minDist, closests);
+		it->getClosestBones(p, minDist, closests, model);
 	}
 
 }

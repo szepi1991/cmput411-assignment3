@@ -245,8 +245,12 @@ void keyInput(unsigned char key, int x, int y) {
 		outfile2.close();
 
 		ofstream outfile3("S.out");
-		anim->printSimpleAttachedMatrix(outfile3);
+		anim->printAttachedMatrix(outfile3, Animation::SIMPLE_M);
 		outfile3.close();
+
+		ofstream outfile4("C.out");
+		anim->printAttachedMatrix(outfile4, Animation::VISIBLE_M);
+		outfile4.close();
 
 		cout << "Finished writing output files." << endl;
 		break;
@@ -274,6 +278,8 @@ void doWhenIdle() {
 
 
 void testCode() {
+
+//	testLineSegWithTriangleIntersection();
 
 //	float a, b, c;
 //	a = b = c = 0.3;
@@ -318,7 +324,7 @@ int main(int argc, char **argv) {
 
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-	glutInitWindowSize(800, 600);
+	glutInitWindowSize(SCR_WIDTH, SCR_HEIGHT);
 	glutInitWindowPosition(100, 100);
 	glutCreateWindow("box.cpp");
 

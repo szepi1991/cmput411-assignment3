@@ -11,6 +11,7 @@
 #include "myexceptions.h"
 #include "Quaternion.h"
 #include "geometry.h"
+#include "Mesh.h"
 
 #include <string>
 #include <vector>
@@ -78,6 +79,9 @@ private:
 	std::string name;
 	std::vector<SkeletonNode> children;
 	boost::shared_ptr<Point> offset;
+	// where this node is located (with the offset!) in world coordinates.
+	// that is the location of the endpoint of the bone
+	Point worldOffset;
 	unsigned channelNum;
 	std::vector<MotionFrame> motion;
 
@@ -95,6 +99,14 @@ public:
 			out << it->getUpperBoneNum() << " " << name << " " << it->name << std::endl;
 			it->getBoneSubTree(out);
 			// NOTE boneNum = childs myNodeNum-1
+		}
+	}
+
+	void setWorldOffsetRec(Point const & parentOffset) {
+		worldOffset = parentOffset + *offset;
+		for (std::vector<SkeletonNode>::iterator it = children.begin();
+												it != children.end(); ++it) {
+			it->setWorldOffsetRec(worldOffset);
 		}
 	}
 
@@ -128,7 +140,9 @@ public:
 		}
 	}
 
-	void getClosestBones(Point p, float& minDist, std::vector<SkeletonNode> & closests) const;
+//	void getClosestBones(Point p, float& minDist, std::vector<SkeletonNode> & closests) const;
+	void getClosestBones(Point p, float& minDist, std::vector<SkeletonNode> & closests,
+			boost::shared_ptr<Mesh> const & model) const;
 
 	// enlarges the axis-aligned box defined by the parameters so that each translated
 	// point fits into the box

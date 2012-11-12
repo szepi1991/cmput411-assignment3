@@ -104,6 +104,15 @@ void Mesh::loadModel(char* modelFile) throw (ParseException) {
 		throw ParseException("", "__ Unable to open the specified .obj file __");
 	}
 
+	// create the triangles corresponding to the faces;
+//	std::vector<Triangle> facesTr;
+	for (std::vector<Face>::const_iterator it = faces.begin(); it != faces.end(); ++it) {
+		facesTr.push_back(Triangle(	vertices[(*it)[0].first],
+									vertices[(*it)[1].first],
+									vertices[(*it)[2].first]));
+	}
+
+
 }
 
 void Mesh::printMesh(std::ostream& out) const {
