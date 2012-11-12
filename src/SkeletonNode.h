@@ -73,7 +73,8 @@ private:
 	// all these are just set up once then never should be changed!
 
 	static unsigned nodeCounter;
-	unsigned myCounter;
+	unsigned myNodeNum;
+	int incomingBoneNum; // FIXME set everywhere
 
 	std::string name;
 	std::vector<SkeletonNode> children;
@@ -84,10 +85,17 @@ private:
 	Eigen::Matrix3f projToBoneM;
 
 public:
-	SkeletonNode(std::ifstream& descr) throw(ParseException);
-	SkeletonNode(boost::shared_ptr<Point> const & offsets);
+	SkeletonNode(std::ifstream& descr, int&) throw(ParseException);
+	SkeletonNode(boost::shared_ptr<Point> const & offsets, int&);
 	virtual ~SkeletonNode();
 	std::string getDescr() const;
+	void getBoneSubTree(std::ostream& out) const {
+		for (std::vector<SkeletonNode>::const_iterator it = children.begin();
+												it != children.end(); ++it) {
+			out << it->incomingBoneNum << " " << name << " " << it->name << std::endl;
+			it->getBoneSubTree(out);
+		}
+	}
 
 	void printNames(unsigned level) const;
 	void display(double, unsigned) const;

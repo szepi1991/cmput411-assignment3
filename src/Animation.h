@@ -73,6 +73,7 @@ public:
 	float getFigureSizeBox();
 
 	void attachBones(Mesh const& model) const;
+	void printBoneStruct(std::ostream& out) const { roots[0].getBoneSubTree(out); }
 };
 
 #endif /* ANIMATION_H_ */

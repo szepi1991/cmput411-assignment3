@@ -34,7 +34,8 @@ Animation::Animation(char *filename) throw(ParseException) : figureSize(0) {
 	// now description starts
 	infile >> word;
 	while (word.compare("ROOT") == 0) {
-		roots.push_back(SkeletonNode(infile));
+		int temp = -1;
+		roots.push_back(SkeletonNode(infile, temp));
 		std::cout << "The tree structure we read in is:" << std::endl;
 		(roots.end()-1)->printNames(0);
 		infile >> word;
@@ -173,14 +174,14 @@ void Animation::outputBVH(std::ostream& out) {
  * Note: here we assume there's one root only. */
 void Animation::attachBones(Mesh const& model) const {
 
-	std::vector<SkeletonNode> closests;
-	roots[0].getClosestBones(Point(0,0,0), std::numeric_limits<float>::max(), closests);
-	std::cout << "Closest bones are:";
-	for (std::vector<SkeletonNode>::iterator it = closests.begin(); it != closests.end(); ++it) {
-		std::cout << " " << it->getDescr();
-	}
-	std::cout << std::endl;
-	return;
+//	std::vector<SkeletonNode> closests;
+//	roots[0].getClosestBones(Point(0,0,0), std::numeric_limits<float>::max(), closests);
+//	std::cout << "Closest bones are:";
+//	for (std::vector<SkeletonNode>::iterator it = closests.begin(); it != closests.end(); ++it) {
+//		std::cout << " " << it->getDescr();
+//	}
+//	std::cout << std::endl;
+//	return;
 
 	// first version: for each vertex find the closest bone
 	// -- if k tie for closest, then assign 1/k to each

@@ -68,6 +68,11 @@ void loadThings(int argc, char **argv) throw (int) {
 		throw 2;
 	}
 
+	if (debug::ison(debug::DETAILED)) {
+		cout << "The bones are:" << endl;
+		anim->printBoneStruct(cout);
+	}
+
 	cout << "debug message level:" << endl;
 	cout << "- NONE is " << debug::ison(debug::NONE) << endl;
 	cout << "- LITTLE is " << debug::ison(debug::LITTLE) << endl;

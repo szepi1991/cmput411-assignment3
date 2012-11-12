@@ -38,9 +38,10 @@
  *     }
  * }
  */
-SkeletonNode::SkeletonNode(std::ifstream& descr) throw(ParseException) {
+SkeletonNode::SkeletonNode(std::ifstream& descr, int& boneNum) throw(ParseException) {
 
-	myCounter = nodeCounter++;
+	incomingBoneNum = boneNum++;
+	myNodeNum = nodeCounter++;
 	std::string token;
 	descr >> token;
 	if (token.compare("{") != 0) {
@@ -96,11 +97,11 @@ SkeletonNode::SkeletonNode(std::ifstream& descr) throw(ParseException) {
 			float offs[3];
 			descr >> offs[0] >> offs[1] >> offs[2];
 			boost::shared_ptr<Point> leafOff(new Point(offs[0], offs[1], offs[2]));
-			children.push_back(SkeletonNode(leafOff));
+			children.push_back(SkeletonNode(leafOff, boneNum));
 			descr >> token;
 			confirmParse(token, "}");
 		} else if (token.compare("JOINT") == 0) {
-			children.push_back(SkeletonNode(descr));
+			children.push_back(SkeletonNode(descr, boneNum));
 		} else {
 			assert(false); // should be impossible
 		}
@@ -120,10 +121,11 @@ SkeletonNode::SkeletonNode(std::ifstream& descr) throw(ParseException) {
 
 /* Use this constructor for leaf nodes.
  */
-SkeletonNode::SkeletonNode(boost::shared_ptr<Point> const & offsets) {
-	myCounter = nodeCounter++;
-	name = "leaf";
-	if (MYINFO)
+SkeletonNode::SkeletonNode(boost::shared_ptr<Point> const & offsets, int & boneNum) {
+	incomingBoneNum = boneNum++;
+	myNodeNum = nodeCounter++;
+	name = "End Site";
+	if (debug::ison(debug::DETAILED))
 		std::cout << "Created " << getDescr() << std::endl;
 	offset = offsets;
 	channelNum = 0;
@@ -131,7 +133,7 @@ SkeletonNode::SkeletonNode(boost::shared_ptr<Point> const & offsets) {
 
 std::string SkeletonNode::getDescr() const {
 	std::stringstream ss;
-	ss << name << "-" << myCounter;
+	ss << name << "-" << myNodeNum;
 	return ss.str();
 }
 
@@ -207,7 +209,7 @@ void SkeletonNode::display(double frame, unsigned selectedbone = -1) const {
 	}
 
 	float currentColor[4];
-	if (selectedbone == myCounter) {
+	if (selectedbone == myNodeNum) {
 		glGetFloatv(GL_CURRENT_COLOR,currentColor);
     	glColor3f(1.0, 0, 0); // red
 	}
@@ -219,7 +221,7 @@ void SkeletonNode::display(double frame, unsigned selectedbone = -1) const {
     glEnd();
 
     // reset color
-    if (selectedbone == myCounter) {
+    if (selectedbone == myNodeNum) {
     	glColor4fv(currentColor);
     }
 
@@ -311,9 +313,9 @@ void SkeletonNode::printTreeBVH(std::ostream& out, unsigned level) const {
 	out << "}" << std::endl;
 }
 
-/**Returns the list of bones that are closest (within EPS distance) to the given point.
- * The coordinates of p are given in the frame of the parent of this node.
- * For root this means world coordinates.
+/**Returns the list of bones (identified by the end sites) that are closest
+ * (within EPS distance) to the given point. The coordinates of p are given in
+ * the frame of the parent of this node. For root this means world coordinates.
  */
 void SkeletonNode::getClosestBones(Point p, float minDist, std::vector<SkeletonNode> & closests) const {
 	if (children.size() == 0) return;
@@ -324,22 +326,26 @@ void SkeletonNode::getClosestBones(Point p, float minDist, std::vector<SkeletonN
 	p -= Point(offset->get(0), offset->get(1), offset->get(2));
 	if (debug::ison(debug::EVERYTHING))
 		std::cout << p << std::endl;
-	boost::shared_ptr<Point> bone = getEndPoint();
-	float pb = p.dot(*bone);
-	float dist;
-	if (pb <= 0) dist = p.getLength();
-	else if (pb >= bone->getLengthSqr()) dist = (p - *bone).getLength();
-	else {
-		Eigen::Vector3f v(p.x(),p.y(),p.z());
-		dist = std::sqrt(v.transpose()*projToBoneM*v);
-	}
 
-	if (std::abs(dist - minDist) < EPS) {
-		closests.push_back(*this);
-	} else if (dist < minDist) {
-		closests.clear();
-		closests.push_back(*this);
-		minDist = dist;
+	for (std::vector<SkeletonNode>::const_iterator it = children.begin();
+														it != children.end(); ++it) {
+		boost::shared_ptr<Point> bone = it->offset;
+		float pb = p.dot(*bone);
+		float dist;
+		if (pb <= 0) dist = p.getLength();
+		else if (pb >= bone->getLengthSqr()) dist = (p - *bone).getLength();
+		else {
+			Eigen::Vector3f v(p.x(),p.y(),p.z());
+			dist = std::sqrt(v.transpose()*projToBoneM*v);
+		}
+
+		if (std::abs(dist - minDist) < EPS) {
+			closests.push_back(*it);
+		} else if (dist < minDist) {
+			closests.clear();
+			closests.push_back(*it);
+			minDist = dist;
+		}
 	}
 
 	for (std::vector<SkeletonNode>::const_iterator it = children.begin();
