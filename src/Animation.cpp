@@ -11,14 +11,14 @@
 #include "Animation.h"
 #include "SkeletonNode.h"
 #include "tools.h"
+#include "sparseMatrixHelp.h"
 
 #include <fstream>
 #include <sstream>
 #include <cmath>
 #include <limits>
 
-
-Animation::Animation(char *filename) throw(ParseException) : figureSize(0) {
+Animation::Animation(char *filename) throw(ParseException) : figureSize(0), selectedBone(0) {
 
 	std::ifstream infile(filename);
 	// read stuff in
@@ -163,32 +163,69 @@ void Animation::outputBVH(std::ostream& out) {
 
 /** calculates an attachment to the bones of the specified model.
  * Note: here we assume there's one root only. */
-void Animation::attachBones(Mesh const& model) const {
+void Animation::simpleAttachBones() {
 
-//	std::vector<SkeletonNode> closests;
-//	roots[0].getClosestBones(Point(0,0,0), std::numeric_limits<float>::max(), closests);
-//	std::cout << "Closest bones are:";
-//	for (std::vector<SkeletonNode>::iterator it = closests.begin(); it != closests.end(); ++it) {
-//		std::cout << " " << it->getDescr();
-//	}
-//	std::cout << std::endl;
-//	return;
+	typedef Eigen::Triplet<double> Tr;
+	std::vector<Tr> tripletList;
+	unsigned numVert = model->getNumVertices();
+	tripletList.reserve(numVert*2);
 
 	// first version: for each vertex find the closest bone
 	// -- if k tie for closest, then assign 1/k to each
 	const Point * vertex;
 	unsigned vNum = 0;
-	while (vertex = model.getVertex(vNum), vertex != NULL) {
-		vNum++;
+	while (vertex = model->getVertex(vNum), vertex != NULL) {
 		std::vector<SkeletonNode> closests;
 		roots[0].getClosestBones(Point(*vertex), std::numeric_limits<float>::max(), closests);
+		for (std::vector<SkeletonNode>::const_iterator it = closests.begin(); it != closests.end(); ++it) {
+			tripletList.push_back(Tr(vNum, it->getUpperBoneNum(), 1/double(closests.size()) ));
+		}
+		vNum++;
+	}
+
+	if (debug::ison(debug::EVERYTHING)) {
+		std::cout << "num of triplets: " << tripletList.size() << std::endl;
+		for (std::vector<Tr>::const_iterator it = tripletList.begin(); it != tripletList.end(); it++) {
+			if (it->row() >= numVert || it->col() >= SkeletonNode::getNumberOfNodes()) {
+				std::cerr << "issue with: " << it->row() << ", " << it->col() << std::endl;
+			}
+		}
+	}
+
+	simpleConMat.resize(numVert, SkeletonNode::getNumberOfNodes());
+	simpleConMat.reserve(tripletList.size()*1.5);
+	simpleConMat.setFromTriplets(tripletList.begin(), tripletList.end());
+}
+
+void Animation::updateMeshSelected() {
+	if (model) {
+		// want all the i's st (i, selectedBone) is nonzero in simpleConMat
+		boost::shared_ptr< std::set<unsigned> > sel( new std::set<unsigned> );
+
+		// not fast way:
+		for (int row = 0; row < simpleConMat.rows(); ++row) {
+			if (simpleConMat.coeff(row, selectedBone) != 0) sel->insert((unsigned) row);
+		}
+
+		model->setSelectedVerts(sel);
+	}
+}
+
+void Animation::printSimpleAttachedMatrix(std::ostream& out) const throw(WrongStateException) {
+	if (!model)
+		throw WrongStateException("Tried to print the simple attached matrix before setting a model for the skeleton");
+
+	for (unsigned v = 0; v < model->getNumVertices(); ++v) {
+		printSparseRow(out, simpleConMat, v);
+//		Eigen::SparseInnerVectorSet<float> curRow;
+//		out << v << " " << simpleConMat.row(v);
 	}
 }
 
 
 // displays the current frame (that has been already calculated from curTime)
 // selectedbone is going to be drawn with red
-void Animation::display(unsigned selectedbone = -1) {
+void Animation::display(bool showSelBone) {
 
     glLineWidth(WIDTH);
 
@@ -200,7 +237,7 @@ void Animation::display(unsigned selectedbone = -1) {
 
 //	if (MYINFO) std::cout << "Drawing Frame " << curFrameFrac << std::endl;
 	for (unsigned i = 0; i < roots.size(); ++i)
-		roots[i].display(curFrameFrac, selectedbone);
+		roots[i].display(curFrameFrac, selectedBone);
 
     glLineWidth(1); // assume it's 1 by def
 

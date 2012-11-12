@@ -180,7 +180,7 @@ void SkeletonNode::addAnimationFrame(std::ifstream& descr) {
  * (This is the default value).
  * selectedBone should be drawn with red.
  * */
-void SkeletonNode::display(double frame, unsigned selectedbone = -1) const {
+void SkeletonNode::display(double frame, int selectedbone = -1) const {
 	if (children.size() == 0) return;
 
 	glPushMatrix();
@@ -207,7 +207,7 @@ void SkeletonNode::display(double frame, unsigned selectedbone = -1) const {
 	}
 
 	float currentColor[4];
-	if (selectedbone == myNodeNum) {
+	if (selectedbone == children[0].getUpperBoneNum()) {
 		glGetFloatv(GL_CURRENT_COLOR,currentColor);
     	glColor3f(1.0, 0, 0); // red
 	}
@@ -219,7 +219,7 @@ void SkeletonNode::display(double frame, unsigned selectedbone = -1) const {
     glEnd();
 
     // reset color
-    if (selectedbone == myNodeNum) {
+    if (selectedbone == children[0].getUpperBoneNum()) {
     	glColor4fv(currentColor);
     }
 

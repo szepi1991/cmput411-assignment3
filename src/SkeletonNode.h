@@ -8,7 +8,7 @@
 #ifndef SKELETONNODE_H_
 #define SKELETONNODE_H_
 
-#include "ParseException.h"
+#include "myexceptions.h"
 #include "Quaternion.h"
 #include "geometry.h"
 
@@ -73,7 +73,7 @@ private:
 	// all these are just set up once then never should be changed!
 
 	static unsigned nodeCounter;
-	unsigned myNodeNum;
+	int myNodeNum;
 //	int incomingBoneNum;
 
 	std::string name;
@@ -92,14 +92,29 @@ public:
 	void getBoneSubTree(std::ostream& out) const {
 		for (std::vector<SkeletonNode>::const_iterator it = children.begin();
 												it != children.end(); ++it) {
-			out << it->myNodeNum -1 << " " << name << " " << it->name << std::endl;
+			out << it->getUpperBoneNum() << " " << name << " " << it->name << std::endl;
 			it->getBoneSubTree(out);
 			// NOTE boneNum = childs myNodeNum-1
 		}
 	}
 
+	// the boneNum corresponding to the node ending at this node
+	int getUpperBoneNum() const { return myNodeNum-1; }
+
+	void getBoneDescr(std::ostream& out, int boneNum) const {
+		for (std::vector<SkeletonNode>::const_iterator it = children.begin();
+												it != children.end(); ++it) {
+			if (it->getUpperBoneNum() == boneNum) {
+				out << it->getUpperBoneNum() << " " << name << " " << it->name;
+				return;
+			} else {
+				it->getBoneDescr(out, boneNum);
+			}
+		}
+	}
+
 	void printNames(unsigned level) const;
-	void display(double, unsigned) const;
+	void display(double, int) const;
 	void addAnimationFrame(std::ifstream& descr);
 	const boost::shared_ptr<Point> getEndPoint() const throw(int);
 
@@ -124,6 +139,7 @@ public:
 	}
 	void offsetBounds(float * mins, float * maxs) const;
 
+	// node this only works as expected if we never delete a node!!
 	unsigned static getNumberOfNodes() {return nodeCounter;}
 };
 

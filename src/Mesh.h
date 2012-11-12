@@ -9,6 +9,8 @@
 #define MESH_H_
 
 #include <vector>
+#include <boost/shared_ptr.hpp>
+#include <set> // maybe we should use unordered list..
 #include "tools.h"
 #include "geometry.h"
 
@@ -21,15 +23,21 @@ private:
 	std::vector<Point> vertices;
 	std::vector<Point> normals;
 	std::vector<Face> faces;
+
+	// optional
+	boost::shared_ptr< std::set<unsigned> > selected;
 public:
-	Mesh() {};
+	Mesh() { selected.reset( new std::set<unsigned> ); }
 	void loadModel(char* inputfile) throw (ParseException);
 	void display() const;
 	void printMesh(std::ostream& out) const;
 	virtual ~Mesh();
+	unsigned getNumVertices() const { return vertices.size(); }
+	void setSelectedVerts(boost::shared_ptr< std::set<unsigned> > const& sel) {
+		selected = sel;
+	}
 
-	// return NULL if bad index.
-	// TODO note that we should use shared_ptr instead..
+	// return NULL if bad index. TODO note that we should use shared_ptr instead..
 	const Point * getVertex(unsigned ind) const {
 		if (ind < 0 || ind >= vertices.size()) return NULL;
 		return &vertices[ind];

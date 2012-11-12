@@ -129,12 +129,17 @@ void Mesh::printMesh(std::ostream& out) const {
 
 
 void Mesh::display() const {
+	// TODO optimize the selected stuff! maybe boost unordered_set
 	for (std::vector<Face>::const_iterator it = faces.begin(); it != faces.end(); ++it) {
-		glColor3f(1.0, 1.0, 1.0);
 		glBegin(GL_TRIANGLES);
 			for (unsigned vn = 0; vn < 3; ++vn) { // each face is a triangle
 				Point n = normals[(*it)[vn].second];
 				Point v = vertices[(*it)[vn].first];
+				if (selected->find( (*it)[vn].first ) != selected->end() ) {
+					glColor3f(1.0, 0.0, 0.0); // red
+				} else {
+					glColor3f(1.0, 1.0, 1.0);
+				}
 				glNormal3f(n.x(), n.y(), n.z());
 				glVertex3f(v.x(), v.y(), v.z());
 			}

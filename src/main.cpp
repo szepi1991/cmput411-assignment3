@@ -15,7 +15,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "Animation.h"
-#include "ParseException.h"
+#include "myexceptions.h"
 #include "Camera.h"
 #include "tools.h"
 #include "Mesh.h"
@@ -25,10 +25,9 @@
 using namespace std;
 
 unsigned SkeletonNode::nodeCounter=0;
-unsigned selectedNode = 0;
 static boost::shared_ptr<Animation> anim;
 static Camera cam;
-static Mesh model;
+static boost::shared_ptr<Mesh> model;
 static bool wireFrame = true;
 
 static float lightPos[] = { 0.0, 10.5, 13.0, 1.0 };
@@ -42,6 +41,7 @@ void drawText(float x, float y, float z, char const *string) {
 	for (c = string; *c != '\0'; c++) { glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, *c); }
 }
 
+
 void loadThings(int argc, char **argv) throw (int) {
 
 	if (argc != 3) {
@@ -51,7 +51,8 @@ void loadThings(int argc, char **argv) throw (int) {
 
 	cout << "Reading in file now." << endl;
 	try {
-		model.loadModel(argv[1]);
+		model.reset(new Mesh());
+		model->loadModel(argv[1]);
 
 		anim.reset(new Animation(argv[2]));
 		cout << "The name of the loaded file is " << anim->getFileName() << endl;
@@ -77,11 +78,10 @@ void loadThings(int argc, char **argv) throw (int) {
 	cout << "NONE is " << debug::ison(debug::NONE) << endl;
 	cout << "LITTLE is " << debug::ison(debug::LITTLE) << endl;
 	cout << "DETAILED is " << debug::ison(debug::DETAILED) << endl;
-	cout << "EVERYTHING is " << debug::ison(debug::EVERYTHING) << endl;
-}
+	cout << "EVERYTHING is " << debug::ison(debug::EVERYTHING) << endl << endl;
 
-void computeAttachments() {
-	anim->attachBones(model);
+	anim->printSelectedBone();
+	anim->setModel(model);
 }
 
 void graphicsSetup() {
@@ -177,7 +177,7 @@ void drawScene(void)
 
 	// Set stickman color.
 	glColor3f(1.0,1.0,0.1);
-	anim->display(selectedNode);
+	anim->display(true);
 
 	// mesh
 	glColor3f(1.0, 1.0, 1.0);
@@ -187,7 +187,7 @@ void drawScene(void)
 		glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 //		glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, skinCol);
 	}
-	model.display();
+	model->display();
 	glDisable(GL_LIGHTING);
 
 	glutSwapBuffers();
@@ -198,12 +198,12 @@ void keyInput(unsigned char key, int x, int y) {
 	switch (key) {
 	// -- testing starts
 	case ',':
-		// FIXME will need to renumber nodes and stuff ... to be like online!
-		selectedNode = (selectedNode == 0) ? SkeletonNode::getNumberOfNodes() : selectedNode-1;
+		anim->selectPrevBone();
+		anim->printSelectedBone();
 		break;
 	case '.':
-		selectedNode++;
-		if (selectedNode > SkeletonNode::getNumberOfNodes()) selectedNode = 0;
+		anim->selectNextBone();
+		anim->printSelectedBone();
 		break;
 	// -- testing over
 	case 'q':
@@ -241,9 +241,15 @@ void keyInput(unsigned char key, int x, int y) {
 		ofstream outfile1("motionout.bvh");
 		anim->outputBVH(outfile1);
 		outfile1.close();
+
 		ofstream outfile2("meshout.obj");
-		model.printMesh(outfile2);
+		model->printMesh(outfile2);
 		outfile2.close();
+
+		ofstream outfile3("S.out");
+		anim->printSimpleAttachedMatrix(outfile3);
+		outfile3.close();
+
 		cout << "Finished writing output files." << endl;
 		break;
 	}
@@ -326,7 +332,6 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 	graphicsSetup();
-	computeAttachments();
 
 	glutDisplayFunc(drawScene);
 	glutReshapeFunc(resize);

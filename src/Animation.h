@@ -11,6 +11,7 @@
 #include <string>
 #include <vector>
 #include <boost/shared_ptr.hpp>
+#include <Eigen/Sparse>
 
 #ifdef __APPLE__
 #  include <GLUT/glut.h>
@@ -21,10 +22,12 @@
 
 #include "SkeletonNode.h"
 #include "Mesh.h"
-#include "ParseException.h"
+#include "myexceptions.h"
 
 class Animation {
 private:
+	static const float WIDTH = 5;
+
 	std::string filename;
 	std::vector<SkeletonNode> roots;
 
@@ -38,12 +41,16 @@ private:
 	double stdFPS;
 	double virtFPS;
 
-	static const float WIDTH = 5;
-
 	long timeOfPreviousCall;
-//	boost::posix_time::ptime lastTime;
 
 	float figureSize;
+
+	// --------
+	int selectedBone;
+
+	// matricies for skin-bone attachment
+	boost::shared_ptr<Mesh> model;
+	Eigen::SparseMatrix<double> simpleConMat;
 
 public:
 	Animation(char *filename) throw(ParseException);
@@ -52,7 +59,7 @@ public:
 	std::string getFileName() {return filename;}
 	double getStdFrameTime() {return stdFrameTime;}
 	float getVirtualFPS() { return virtFPS; }
-	void display(unsigned);
+	void display(bool showSelBone = false);
 	void addToTime(double timediff);
 
 	void startAnim() {
@@ -72,8 +79,40 @@ public:
 	void closestFit(float&, float&, float&, float&, float&, float&);
 	float getFigureSizeBox();
 
-	void attachBones(Mesh const& model) const;
 	void printBoneStruct(std::ostream& out) const { roots[0].getBoneSubTree(out); }
+	void getBoneDescr(std::ostream& out, int boneNum) const {
+		roots[0].getBoneDescr(out, boneNum);
+	}
+
+	void setModel(boost::shared_ptr<Mesh> const & m) {
+		model = m;
+		std::cout << "Attaching model to skeleton.." << std::endl;
+		simpleAttachBones();
+		std::cout << "* simple attachment calculated" << std::endl;
+	}
+	void printSimpleAttachedMatrix(std::ostream& out) const throw(WrongStateException);
+	void updateMeshSelected();
+
+	void selectNextBone() {
+		selectedBone++;
+		if (selectedBone+1 >= (int) SkeletonNode::getNumberOfNodes()) selectedBone = 0;
+		updateMeshSelected();
+	}
+	void selectPrevBone() {
+		selectedBone--;
+		if (selectedBone < 0) selectedBone = SkeletonNode::getNumberOfNodes()-2; // -1?
+		updateMeshSelected();
+	}
+	void printSelectedBone() {
+		if (debug::ison(debug::LITTLE)) {
+			std::cout << "Selected bone: ";
+			getBoneDescr(std::cout, selectedBone);
+			std::cout << std::endl;
+		}
+	}
+private:
+	void simpleAttachBones();
+
 };
 
 #endif /* ANIMATION_H_ */
