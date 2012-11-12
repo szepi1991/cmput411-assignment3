@@ -38,9 +38,8 @@
  *     }
  * }
  */
-SkeletonNode::SkeletonNode(std::ifstream& descr, int& boneNum) throw(ParseException) {
+SkeletonNode::SkeletonNode(std::ifstream& descr) throw(ParseException) {
 
-	incomingBoneNum = boneNum++;
 	myNodeNum = nodeCounter++;
 	std::string token;
 	descr >> token;
@@ -97,11 +96,11 @@ SkeletonNode::SkeletonNode(std::ifstream& descr, int& boneNum) throw(ParseExcept
 			float offs[3];
 			descr >> offs[0] >> offs[1] >> offs[2];
 			boost::shared_ptr<Point> leafOff(new Point(offs[0], offs[1], offs[2]));
-			children.push_back(SkeletonNode(leafOff, boneNum));
+			children.push_back(SkeletonNode(leafOff));
 			descr >> token;
 			confirmParse(token, "}");
 		} else if (token.compare("JOINT") == 0) {
-			children.push_back(SkeletonNode(descr, boneNum));
+			children.push_back(SkeletonNode(descr));
 		} else {
 			assert(false); // should be impossible
 		}
@@ -121,8 +120,7 @@ SkeletonNode::SkeletonNode(std::ifstream& descr, int& boneNum) throw(ParseExcept
 
 /* Use this constructor for leaf nodes.
  */
-SkeletonNode::SkeletonNode(boost::shared_ptr<Point> const & offsets, int & boneNum) {
-	incomingBoneNum = boneNum++;
+SkeletonNode::SkeletonNode(boost::shared_ptr<Point> const & offsets) {
 	myNodeNum = nodeCounter++;
 	name = "End Site";
 	if (debug::ison(debug::DETAILED))

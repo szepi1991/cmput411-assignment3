@@ -74,7 +74,7 @@ private:
 
 	static unsigned nodeCounter;
 	unsigned myNodeNum;
-	int incomingBoneNum; // FIXME set everywhere
+//	int incomingBoneNum;
 
 	std::string name;
 	std::vector<SkeletonNode> children;
@@ -85,15 +85,16 @@ private:
 	Eigen::Matrix3f projToBoneM;
 
 public:
-	SkeletonNode(std::ifstream& descr, int&) throw(ParseException);
-	SkeletonNode(boost::shared_ptr<Point> const & offsets, int&);
+	SkeletonNode(std::ifstream& descr) throw(ParseException);
+	SkeletonNode(boost::shared_ptr<Point> const & offsets);
 	virtual ~SkeletonNode();
 	std::string getDescr() const;
 	void getBoneSubTree(std::ostream& out) const {
 		for (std::vector<SkeletonNode>::const_iterator it = children.begin();
 												it != children.end(); ++it) {
-			out << it->incomingBoneNum << " " << name << " " << it->name << std::endl;
+			out << it->myNodeNum -1 << " " << name << " " << it->name << std::endl;
 			it->getBoneSubTree(out);
+			// NOTE boneNum = childs myNodeNum-1
 		}
 	}
 

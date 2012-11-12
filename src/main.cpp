@@ -59,7 +59,7 @@ void loadThings(int argc, char **argv) throw (int) {
 		float xMin, xMax, yMin, yMax, zMin, zMax;
 		anim->closestFit(xMin, xMax, yMin, yMax, zMin, zMax);
 
-		float extra = 1; // TODO maybe based on figure size? (our upper bound is too big)
+		float extra = 1.5; // TODO maybe based on figure size? (our upper bound is too big)
 		cam.makeVisible(xMin-extra, xMax+extra,
 				yMin-extra, yMax+extra, zMin-extra, zMax+extra);
 
@@ -69,15 +69,15 @@ void loadThings(int argc, char **argv) throw (int) {
 	}
 
 	if (debug::ison(debug::DETAILED)) {
-		cout << "The bones are:" << endl;
+		cout << endl << "-- The bones are:" << endl;
 		anim->printBoneStruct(cout);
 	}
 
-	cout << "debug message level:" << endl;
-	cout << "- NONE is " << debug::ison(debug::NONE) << endl;
-	cout << "- LITTLE is " << debug::ison(debug::LITTLE) << endl;
-	cout << "- DETAILED is " << debug::ison(debug::DETAILED) << endl;
-	cout << "- EVERYTHING is " << debug::ison(debug::EVERYTHING) << endl;
+	cout << endl << "-- debug message level:" << endl;
+	cout << "NONE is " << debug::ison(debug::NONE) << endl;
+	cout << "LITTLE is " << debug::ison(debug::LITTLE) << endl;
+	cout << "DETAILED is " << debug::ison(debug::DETAILED) << endl;
+	cout << "EVERYTHING is " << debug::ison(debug::EVERYTHING) << endl;
 }
 
 void computeAttachments() {

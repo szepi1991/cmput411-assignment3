@@ -17,12 +17,6 @@
 #include <cmath>
 #include <limits>
 
-//#ifdef __APPLE__
-//#  include <GLUT/glut.h>
-//#else
-//#  include <GL/glut.h>
-//#endif
-
 
 Animation::Animation(char *filename) throw(ParseException) : figureSize(0) {
 
@@ -34,8 +28,7 @@ Animation::Animation(char *filename) throw(ParseException) : figureSize(0) {
 	// now description starts
 	infile >> word;
 	while (word.compare("ROOT") == 0) {
-		int temp = -1;
-		roots.push_back(SkeletonNode(infile, temp));
+		roots.push_back(SkeletonNode(infile));
 		std::cout << "The tree structure we read in is:" << std::endl;
 		(roots.end()-1)->printNames(0);
 		infile >> word;
@@ -80,8 +73,6 @@ Animation::Animation(char *filename) throw(ParseException) : figureSize(0) {
 	stdFPS = floor((1.0 / stdFrameTime) + 0.5);
 	virtFPS = stdFPS;
 
-//	curFrameWhole = -1;
-//	curFrameFrac = curFrameWhole;
 	curFrameFrac = -1;
 }
 
