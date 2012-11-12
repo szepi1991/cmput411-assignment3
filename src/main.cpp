@@ -199,11 +199,9 @@ void keyInput(unsigned char key, int x, int y) {
 	// -- testing starts
 	case ',':
 		anim->selectPrevBone();
-		anim->printSelectedBone();
 		break;
 	case '.':
 		anim->selectNextBone();
-		anim->printSelectedBone();
 		break;
 	// -- testing over
 	case 'q':

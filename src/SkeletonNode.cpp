@@ -59,6 +59,15 @@ SkeletonNode::SkeletonNode(std::ifstream& descr) throw(ParseException) {
 	float offs[3];
 	descr >> offs[0] >> offs[1] >> offs[2];
 	offset.reset(new Point(offs[0], offs[1], offs[2]));
+
+	// calculate projToBone here.
+	Eigen::Matrix3f b = Eigen::Matrix3f::Zero();
+	b(0,0) = offset->x();
+	b(1,0) = offset->y(),
+	b(2,0) = offset->z();
+	// so now it's like a column vector and 0s after it
+	projToBoneM = Eigen::Matrix3f::Identity() - (b * b.transpose()) * (1/ offset->getLengthSqr());
+
 	descr >> token;
 	confirmParse(token, "CHANNELS");
 
@@ -107,15 +116,6 @@ SkeletonNode::SkeletonNode(std::ifstream& descr) throw(ParseException) {
 		descr >> token;
 	}
 
-	// calculate projToBone here.
-	boost::shared_ptr<Point> bone = getEndPoint();
-//	Eigen::Vector3f b(bone->x(), bone->y(), bone->z());
-	Eigen::Matrix3f b = Eigen::Matrix3f::Zero();
-	b(0,0) = bone->x();
-	b(1,0) = bone->y(),
-	b(2,0) = bone->z();
-	// so now it's like a column vector and 0s after it
-	projToBoneM = Eigen::Matrix3f::Identity() - (b * b.transpose()) * (1/b.squaredNorm());
 }
 
 /* Use this constructor for leaf nodes.
@@ -218,7 +218,7 @@ void SkeletonNode::display(double frame, int selectedbone = -1) const {
 	   glVertex3f(endP->get(0), endP->get(1), endP->get(2));
     glEnd();
 
-    // reset color
+    // reset colour
     if (selectedbone == children[0].getUpperBoneNum()) {
     	glColor4fv(currentColor);
     }
@@ -315,18 +315,19 @@ void SkeletonNode::printTreeBVH(std::ostream& out, unsigned level) const {
  * (within EPS distance) to the given point. The coordinates of p are given in
  * the frame of the parent of this node. For root this means world coordinates.
  */
-void SkeletonNode::getClosestBones(Point p, float minDist, std::vector<SkeletonNode> & closests) const {
+void SkeletonNode::getClosestBones(Point p, float& minDist, std::vector<SkeletonNode> & closests) const {
 	if (children.size() == 0) return;
 
 	// transform point so that bone is at (0,0)
-	if (debug::ison(debug::EVERYTHING))
-		std::cout << name << " " << p << " -> ";
-	p -= Point(offset->get(0), offset->get(1), offset->get(2));
-	if (debug::ison(debug::EVERYTHING))
-		std::cout << p << std::endl;
+//	if (debug::ison(debug::EVERYTHING))
+//		std::cout << name << " " << p << " -> ";
+	p -= Point(offset->x(), offset->y(), offset->z());
+//	if (debug::ison(debug::EVERYTHING))
+//		std::cout << p << std::endl;
 
 	for (std::vector<SkeletonNode>::const_iterator it = children.begin();
 														it != children.end(); ++it) {
+
 		boost::shared_ptr<Point> bone = it->offset;
 		float pb = p.dot(*bone);
 		float dist;
@@ -334,16 +335,27 @@ void SkeletonNode::getClosestBones(Point p, float minDist, std::vector<SkeletonN
 		else if (pb >= bone->getLengthSqr()) dist = (p - *bone).getLength();
 		else {
 			Eigen::Vector3f v(p.x(),p.y(),p.z());
-			dist = std::sqrt(v.transpose()*projToBoneM*v);
+			dist = std::sqrt(v.transpose()*(it->projToBoneM)*v);
+		}
+
+		if (debug::ison(debug::EVERYTHING)) {
+			std::cout << it->getUpperBoneNum() << " " << getDescr() << ":"  << it->getDescr()
+					<< ". Dist=" << dist;
 		}
 
 		if (std::abs(dist - minDist) < EPS) {
 			closests.push_back(*it);
+			if (debug::ison(debug::EVERYTHING))
+				std::cout << " +";
 		} else if (dist < minDist) {
 			closests.clear();
 			closests.push_back(*it);
 			minDist = dist;
+			if (debug::ison(debug::EVERYTHING))
+				std::cout << " ***";
 		}
+		if (debug::ison(debug::EVERYTHING))
+			std::cout << std::endl;
 	}
 
 	for (std::vector<SkeletonNode>::const_iterator it = children.begin();

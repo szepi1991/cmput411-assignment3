@@ -74,7 +74,6 @@ private:
 
 	static unsigned nodeCounter;
 	int myNodeNum;
-//	int incomingBoneNum;
 
 	std::string name;
 	std::vector<SkeletonNode> children;
@@ -82,6 +81,7 @@ private:
 	unsigned channelNum;
 	std::vector<MotionFrame> motion;
 
+	// this corresponds to the incoming bone!
 	Eigen::Matrix3f projToBoneM;
 
 public:
@@ -128,7 +128,7 @@ public:
 		}
 	}
 
-	void getClosestBones(Point p, float minDist, std::vector<SkeletonNode> & closests) const;
+	void getClosestBones(Point p, float& minDist, std::vector<SkeletonNode> & closests) const;
 
 	// enlarges the axis-aligned box defined by the parameters so that each translated
 	// point fits into the box

@@ -176,7 +176,10 @@ void Animation::simpleAttachBones() {
 	unsigned vNum = 0;
 	while (vertex = model->getVertex(vNum), vertex != NULL) {
 		std::vector<SkeletonNode> closests;
-		roots[0].getClosestBones(Point(*vertex), std::numeric_limits<float>::max(), closests);
+		float temp = std::numeric_limits<float>::max();
+		if (debug::ison(debug::EVERYTHING))
+			std::cout << "+ Studing point " << vNum << " that is " << *vertex << std::endl;
+		roots[0].getClosestBones(Point(*vertex), temp, closests);
 		for (std::vector<SkeletonNode>::const_iterator it = closests.begin(); it != closests.end(); ++it) {
 			tripletList.push_back(Tr(vNum, it->getUpperBoneNum(), 1/double(closests.size()) ));
 		}
@@ -207,6 +210,13 @@ void Animation::updateMeshSelected() {
 			if (simpleConMat.coeff(row, selectedBone) != 0) sel->insert((unsigned) row);
 		}
 
+		if (debug::ison(debug::DETAILED)) {
+			std::cout << sel->size() << " vertices attached to current bone. These are" << std::endl;
+			for (std::set<unsigned>::const_iterator it = sel->begin();
+													it != sel->end(); ++it) {
+				std::cout << "\t" << *it << ": " << *(model->getVertex(*it)) << std::endl;
+			}
+		}
 		model->setSelectedVerts(sel);
 	}
 }

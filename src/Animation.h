@@ -96,11 +96,13 @@ public:
 	void selectNextBone() {
 		selectedBone++;
 		if (selectedBone+1 >= (int) SkeletonNode::getNumberOfNodes()) selectedBone = 0;
+		printSelectedBone();
 		updateMeshSelected();
 	}
 	void selectPrevBone() {
 		selectedBone--;
 		if (selectedBone < 0) selectedBone = SkeletonNode::getNumberOfNodes()-2; // -1?
+		printSelectedBone();
 		updateMeshSelected();
 	}
 	void printSelectedBone() {
