@@ -18,7 +18,8 @@
 #include <cmath>
 #include <limits>
 
-Animation::Animation(char *filename) throw(ParseException) : figureSize(0), selectedBone(0) {
+Animation::Animation(char *filename) throw(ParseException) :
+					figureSize(0), selectedBone(0), displayOnMeshType(SIMPLE_M) {
 
 	std::ifstream infile(filename);
 	// read stuff in
@@ -171,7 +172,7 @@ void Animation::outputBVH(std::ostream& out) {
  *
  * visible == true iff when looking for closest bone we only count the visible ones!
  */
-void Animation::simpleAttachBones(bool visible) {
+void Animation::AttachBones(bool visible) {
 
 	typedef Eigen::Triplet<double> Tr;
 	std::vector<Tr> tripletList;
@@ -188,7 +189,9 @@ void Animation::simpleAttachBones(bool visible) {
 	const Point * vertex;
 	unsigned vNum = 0;
 
-	while (vertex = model->getVertex(vNum), vertex != NULL) {
+	while (vertex = model->getVertex(vNum), vertex != NULL
+//			&& vNum < 10 // FIXME test
+										) {
 		if (debug::ison(debug::LITTLE)) {
 			std::cout << vNum << " ";
 			std::flush(std::cout);
@@ -229,12 +232,12 @@ void Animation::simpleAttachBones(bool visible) {
 	}
 }
 
-void Animation::updateMeshSelected(AttMatr mType) {
+void Animation::updateMeshSelected() {
 	if (model) {
 		// want all the i's st (i, selectedBone) is nonzero in simpleConMat
 		boost::shared_ptr< std::set<unsigned> > sel( new std::set<unsigned> );
 		Eigen::SparseMatrix<double>* matToUse;
-		switch (mType) {
+		switch (displayOnMeshType) {
 		case SIMPLE_M: matToUse = &simpleConMat; break;
 		case VISIBLE_M: matToUse = &visConMat; break;
 		default: throw(0);
@@ -256,7 +259,7 @@ void Animation::updateMeshSelected(AttMatr mType) {
 	}
 }
 
-void Animation::printAttachedMatrix(std::ostream& out, AttMatr mType) const throw(WrongStateException) {
+void Animation::printAttachedMatrix(std::ostream& out, AttachMatrix mType) const throw(WrongStateException) {
 	if (!model)
 		throw WrongStateException("Tried to print the attached matrix before setting a model for the skeleton");
 

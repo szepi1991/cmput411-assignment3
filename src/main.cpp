@@ -203,6 +203,9 @@ void keyInput(unsigned char key, int x, int y) {
 	case '.':
 		anim->selectNextBone();
 		break;
+	case '/':
+		anim->nextConnectionDisplayType();
+		break;
 	// -- testing over
 	case 'q':
 		exit(0);
@@ -279,7 +282,7 @@ void doWhenIdle() {
 
 void testCode() {
 
-//	testLineSegWithTriangleIntersection();
+	testLineSegWithTriangleIntersection();
 
 //	float a, b, c;
 //	a = b = c = 0.3;
@@ -319,7 +322,7 @@ void testCode() {
 
 int main(int argc, char **argv) {
 
-//	testCode();
+	testCode();
 //	return 0;
 
 	glutInit(&argc, argv);

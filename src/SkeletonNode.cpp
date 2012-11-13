@@ -377,7 +377,13 @@ void SkeletonNode::getClosestBones(Point p, float& minDist,
 
 		// if we it gets updated
 		if (dist < minDist + EPS) {
-			// make sure connecting line does not cross any faces
+
+//			// FIXME I should really test if this is actually the correct or not!!
+//			if (model)
+//				std::cout << "bone " << it->getUpperBoneNum() << " " << name
+//							<< " " << it->name << " attachmentPoint: " << closestPoint
+//							<< "->" << p << std::endl;
+			// make sure connecting line does not cross any faces (if model is specified)
 			if (model && model->intersects(LineSegment(closestPoint, p, false))) continue;
 
 			if (debug::ison(debug::EVERYTHING))

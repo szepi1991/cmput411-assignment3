@@ -41,6 +41,7 @@ public:
 	}
 
 	bool intersects(LineSegment const & l) const {
+		return false; // FIXME testing
 		for (std::vector<Triangle>::const_iterator it = facesTr.begin();
 								it != facesTr.end(); ++it) {
 			if (intersectLineSegWithTriangle(l, *it)) return true;

@@ -26,6 +26,9 @@
 #include "myexceptions.h"
 
 class Animation {
+public:
+	enum AttachMatrix {SIMPLE_M, VISIBLE_M};
+
 private:
 	static const float WIDTH = 5;
 
@@ -48,6 +51,7 @@ private:
 
 	// --------
 	int selectedBone;
+	AttachMatrix displayOnMeshType;
 
 	// matricies for skin-bone attachment
 	boost::shared_ptr<Mesh> model; // TODO should be const Mesh??
@@ -55,8 +59,6 @@ private:
 	Eigen::SparseMatrix<double> visConMat;
 
 public:
-
-	enum AttMatr {SIMPLE_M, VISIBLE_M};
 
 	Animation(char *filename) throw(ParseException);
 	virtual ~Animation();
@@ -95,27 +97,27 @@ public:
 		std::cout << "Attaching model to skeleton.." << std::endl;
 
 		time (&start);
-		simpleAttachBones(false);
+		AttachBones(false);
 		time (&end);
 		std::cout << "* simple attachment calculated in " << difftime(end,start) << "s" << std::endl;
 		time (&start);
-		simpleAttachBones(true);
+		AttachBones(true);
 		time (&end);
 		std::cout << "* visible attachment calculated in " << difftime(end,start) << "s" << std::endl;
 	}
-	void printAttachedMatrix(std::ostream& out, AttMatr mType) const throw(WrongStateException);
+	void printAttachedMatrix(std::ostream& out, AttachMatrix mType) const throw(WrongStateException);
 
 	void selectNextBone() {
 		selectedBone++;
 		if (selectedBone+1 >= (int) SkeletonNode::getNumberOfNodes()) selectedBone = 0;
 		printSelectedBone();
-		updateMeshSelected(VISIBLE_M);
+		updateMeshSelected();
 	}
 	void selectPrevBone() {
 		selectedBone--;
 		if (selectedBone < 0) selectedBone = SkeletonNode::getNumberOfNodes()-2; // -1?
 		printSelectedBone();
-		updateMeshSelected(VISIBLE_M);
+		updateMeshSelected();
 	}
 	void printSelectedBone() {
 		if (debug::ison(debug::LITTLE)) {
@@ -124,9 +126,22 @@ public:
 			std::cout << std::endl;
 		}
 	}
+	void nextConnectionDisplayType() {
+		displayOnMeshType = AttachMatrix ((int) displayOnMeshType + 1);
+		if ((int) displayOnMeshType > (int) VISIBLE_M) displayOnMeshType = (AttachMatrix) 0; // do not forget to update this
+		std::cout << "On mesh we are now displaying attachments of type ";
+		switch (displayOnMeshType) {
+		case SIMPLE_M: std::cout << "SIMPLE"; break;
+		case VISIBLE_M: std::cout << "VISIBLE"; break;
+		default: throw(0);
+		}
+		std::cout << std::endl;
+		updateMeshSelected();
+	}
+
 private:
-	void simpleAttachBones(bool visible);
-	void updateMeshSelected(AttMatr);
+	void AttachBones(bool visible);
+	void updateMeshSelected();
 
 };
 

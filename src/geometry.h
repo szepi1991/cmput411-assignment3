@@ -65,24 +65,25 @@ inline std::ostream& operator<<(std::ostream& os, const Point& pt) {
 class Sphere {
 private:
 	Point c;
-	float radSqr;
+	float rad;
 public:
-	Sphere(Point const& center, float radSq) : c(center), radSqr(radSq) {};
+	Sphere(Point const& center, float radius) : c(center), rad(radius) {};
 	virtual ~Sphere() {};
 	// if it returns false, they don't intersect. That's all we guarantee!
 	bool intersects(Sphere const& o) const {
-		return ((c-o.c).getLengthSqr() > (radSqr+o.radSqr));
+		return ((c-o.c).getLength() > (rad+o.rad));
 	}
 };
 
 class LineSegment {
 private:
 	Point p0, d;
+	Sphere bounding;
 public:
 	// if endpoints == true, e1 and e2 are taken to be the endpoints of the line segment.
 	// If it's false, then e1 is the translation to one endpoint, e2 is the
 	// direction and length of the segment
-	LineSegment(Point const& e1, Point const& e2, bool endPoints = true) {
+	LineSegment(Point const& e1, Point const& e2, bool endPoints = true) : bounding(e1, 1000.0f) { // fake
 		if (endPoints) {
 			p0 = e1;
 			d = e2-e1;
@@ -90,12 +91,14 @@ public:
 			p0 = e1;
 			d = e2;
 		}
+//		bounding = Sphere(p0, d.getLength()); // FIXME actually need this!
+		// FIXME PROBLEM!!!!!!!!!!! when setting the above bounding thing to 0 or 1000 running speed doesn't change!
 	};
 	virtual ~LineSegment() {};
 	friend bool intersectLineSegWithTriangle(LineSegment const & l, Triangle const & t);
 	friend std::ostream& operator<< (std::ostream &out, LineSegment const& l);
 	// always recalculate..
-	Sphere getBoundSphere() const { return Sphere(p0, d.getLengthSqr()); }
+	Sphere const& getBoundSphere() const { return bounding; }
 };
 
 inline std::ostream& operator<< (std::ostream &out, LineSegment const& l) {
@@ -109,7 +112,7 @@ private:
 	Sphere bounding;
 public:
 	Triangle(Point const& e1, Point const& e2, Point const& e3) :
-		v1(e1), v2(e2), v3(e3), bounding(v1, (v1-v2).getLengthSqr()+(v2-v3).getLengthSqr()) {};
+		v1(e1), v2(e2), v3(e3), bounding(v1, std::sqrt((v1-v2).getLengthSqr()+(v2-v3).getLengthSqr())) {};
 	virtual ~Triangle() {};
 	friend bool intersectLineSegWithTriangle(LineSegment const & l, Triangle const & t);
 	friend std::ostream& operator<< (std::ostream &out, Triangle const& t);
@@ -132,7 +135,8 @@ namespace interSectMatr {
 }
 
 inline bool intersectLineSegWithTriangle(LineSegment const & l, Triangle const & t) {
-	if (!l.getBoundSphere().intersects(t.getBoundSphere())) return false;
+	// TODO later actually pass in a bounding box for the line
+//	if (!l.getBoundSphere().intersects(t.getBoundSphere())) return false;
 
 	Point col1 = t.v1-t.v2, col2 = t.v1-t.v3;
 //	interSectMatr::A << col1.mx, col1.my, col1.mz,
@@ -207,6 +211,7 @@ inline void testLineSegWithTriangleIntersection() {
 	LineSegment l(Point(-12, 3, 0), Point(0,0, 0));
 	assert( !intersectLineSegWithTriangle(l, t) ); // in same plane
 
+	// by endpoint
 	l = LineSegment(Point(-1, -1, -1), Point(1, 1, 1));
 	assert( intersectLineSegWithTriangle(l, t) ); // through (0,0,0)
 
@@ -218,6 +223,17 @@ inline void testLineSegWithTriangleIntersection() {
 
 	l = LineSegment(Point(3, 2, -1), Point(1, 1, 1));
 	assert( !intersectLineSegWithTriangle(l, t) ); // too far
+
+	l = LineSegment(Point(3, 2, -1), Point(14, 1123, 14));
+	assert( !intersectLineSegWithTriangle(l, t) ); // too far
+
+	// by translation + segment
+	l = LineSegment(Point(-1, -1, -1), Point(2, 2, 2), false);
+	assert( intersectLineSegWithTriangle(l, t) ); // through (0,0,0)
+
+	l = LineSegment(Point(-3, -3, -1), Point(1, 1, 1.3), false);
+	assert( !intersectLineSegWithTriangle(l, t) ); // too far
+
 }
 
 #endif /* GEOMETRY_H_ */
