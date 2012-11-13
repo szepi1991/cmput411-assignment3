@@ -99,6 +99,8 @@ public:
 	friend std::ostream& operator<< (std::ostream &out, LineSegment const& l);
 	// always recalculate..
 	Sphere const& getBoundSphere() const { return bounding; }
+	Point const& getTrans() const { return p0; }
+	Point const& getShift() const { return d; }
 };
 
 inline std::ostream& operator<< (std::ostream &out, LineSegment const& l) {
@@ -117,6 +119,15 @@ public:
 	friend bool intersectLineSegWithTriangle(LineSegment const & l, Triangle const & t);
 	friend std::ostream& operator<< (std::ostream &out, Triangle const& t);
 	Sphere const& getBoundSphere() const {return bounding;}
+
+	Point const& getPoint(unsigned i) const {
+		switch (i) {
+		case 0: return v1; break;
+		case 1: return v2; break;
+		case 2: return v3; break;
+		default: throw(0);
+		}
+	}
 };
 
 inline std::ostream& operator<< (std::ostream &out, Triangle const& t) {
@@ -158,7 +169,7 @@ inline bool intersectLineSegWithTriangle(LineSegment const & l, Triangle const &
 	// 0 <= b, g. b+g <= 1. 0 < l < 1
 	return (interSectMatr::x(0, 0) >= 0 && interSectMatr::x(1,0) >= 0 &&
 			interSectMatr::x(0,0) + interSectMatr::x(1,0) <= 1 &&
-			0 < interSectMatr::x(2,0) && interSectMatr::x(2,0) < 1 );
+			EPS < interSectMatr::x(2,0) && interSectMatr::x(2,0) < 1-EPS ); // TODO or use 0?
 }
 
 

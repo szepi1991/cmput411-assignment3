@@ -193,7 +193,7 @@ void Animation::AttachBones() {
 
 	time (&start);
 	while (vertex = model->getVertex(vNum), vertex != NULL
-//			&& vNum < 10 // FIXME test
+			&& vNum < 100 // FIXME test
 										) {
 		if (debug::ison(debug::LITTLE)) {
 			std::cout << vNum << " ";

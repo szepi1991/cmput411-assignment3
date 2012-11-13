@@ -206,6 +206,9 @@ void keyInput(unsigned char key, int x, int y) {
 	case '/':
 		anim->nextConnectionDisplayType();
 		break;
+	case 'z':
+		model->nextIntersection();
+		break;
 	// -- testing over
 	case 'q':
 		exit(0);

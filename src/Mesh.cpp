@@ -136,6 +136,18 @@ void Mesh::printMesh(std::ostream& out) const {
 	}
 }
 
+bool Mesh::intersects(LineSegment const & l) {
+	for (std::vector<Triangle>::const_iterator it = facesTr.begin();
+							it != facesTr.end(); ++it) {
+		if (intersectLineSegWithTriangle(l, *it)) {
+			intersections.push_back(std::make_pair(l, *it));
+			nextIntersection(false);
+			return true;
+		}
+	}
+	return false;
+}
+
 
 void Mesh::display() const {
 	// TODO optimize the selected stuff! maybe boost unordered_set
@@ -165,6 +177,32 @@ void Mesh::display() const {
 				glEnd();
 			}
 		}
+	}
+
+	if (selectedIntersection < intersections.size()) {
+		GLint polyMode;
+		glGetIntegerv(GL_POLYGON_MODE, &polyMode);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		Triangle t = intersections[selectedIntersection].second;
+		LineSegment l = intersections[selectedIntersection].first;
+		glColor3f(0.0, 0.0, 1.0);
+		glBegin(GL_TRIANGLES);
+			for (unsigned i = 0; i < 3; ++i) {
+				const Point e = t.getPoint(i);
+				glVertex3f(e.x(), e.y(), e.z());
+			}
+		glEnd();
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		glLineWidth(3);
+		glColor3f(1.0, 0.0, 0.0);
+		const Point e1 = l.getTrans();
+		const Point e2 = e1+l.getShift();
+		glBegin(GL_LINES);
+			glVertex3f(e1.x(), e1.y(), e1.z());
+			glVertex3f(e2.x(), e2.y(), e2.z());
+		glEnd();
+		glLineWidth(1);
+		glPolygonMode(GL_FRONT_AND_BACK, polyMode);
 	}
 }
 
