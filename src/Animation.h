@@ -49,7 +49,8 @@ private:
 	AttachMatrix displayOnMeshType;
 
 	// matricies for skin-bone attachment
-	boost::shared_ptr<Mesh> model; // TODO should be const Mesh??
+	boost::shared_ptr<Mesh> model; // TODO should be const Mesh?? and all other places too
+	// see: http://stackoverflow.com/questions/8793703/const-correctness-with-smart-pointers
 	Eigen::SparseMatrix<double> simpleConMat;
 	Eigen::SparseMatrix<double> visConMat;
 	Eigen::VectorXd importances;

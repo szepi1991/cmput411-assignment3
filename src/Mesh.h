@@ -13,7 +13,6 @@
 #include <set> // TODO maybe we should use unordered list..
 #include "tools.h"
 #include "geometry.h"
-//#include <utility>
 
 // each face is a list of vertex//normal pairs
 typedef std::vector< std::pair< unsigned, unsigned> > Face;
@@ -29,6 +28,8 @@ private:
 
 	// optional
 	boost::shared_ptr< std::set<unsigned> > selected;
+
+
 
 	// TODO only for testing
 	std::vector<std::pair<LineSegment, Triangle> > intersections;
