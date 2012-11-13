@@ -184,9 +184,6 @@ void Animation::AttachBones() {
 	simpleTripletList.reserve(numVert*2);
 	visibleTripletList.reserve(numVert*2);
 
-	// null model
-	boost::shared_ptr<Mesh> nullM;
-
 	if (debug::ison(debug::LITTLE)) std::cout << "verts=" << numVert << ": ";
 
 	// first version: for each vertex find the closest bone
@@ -209,10 +206,10 @@ void Animation::AttachBones() {
 
 		// now find the list of closest attachments (attachments is ordered so easy)
 		std::vector<SkeletonNode> closests;
-		float minDist = attachments.begin()->getDistance(); // there's always at least one
+		float minDist1 = attachments.begin()->getDistance(); // there's always at least one
 		for (std::set<Attachment>::const_iterator setIt = attachments.begin();
 				setIt != attachments.end(); ++setIt) {
-			if (setIt->getDistance() > minDist+EPS) break; // no other can be good
+			if (setIt->getDistance() > minDist1+EPS) break; // no other can be good
 			closests.push_back(setIt->getEndJoint());
 		}
 		for (std::vector<SkeletonNode>::const_iterator it = closests.begin(); it != closests.end(); ++it) {
@@ -221,16 +218,17 @@ void Animation::AttachBones() {
 
 		// now find the list of closest VISIBLE attachments (attachments is ordered so easy)
 		std::vector<SkeletonNode> closestsVis;
-		minDist = (--attachments.end())->getDistance(); // not smaller than any element
+		float minDist2 = (--attachments.end())->getDistance(); // not smaller than any element
 		bool distSet = false;
 		for (std::set<Attachment>::const_iterator setIt = attachments.begin();
 				setIt != attachments.end(); ++setIt) {
-			// FIXME if not visible continue
+			LineSegment attachLine(setIt->getAttachPoint(), *vertex);
+			if (model->intersects(attachLine)) continue; // not visible
 
-			if (setIt->getDistance() > minDist+EPS) break; // no other can be good
+			if (setIt->getDistance() > minDist2+EPS) break; // no other can be good
 			if (!distSet) {
 				distSet = true;
-				minDist = setIt->getDistance();
+				minDist2 = setIt->getDistance();
 			}
 			closestsVis.push_back(setIt->getEndJoint());
 		}

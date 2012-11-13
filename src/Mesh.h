@@ -10,7 +10,7 @@
 
 #include <vector>
 #include <boost/shared_ptr.hpp>
-#include <set> // maybe we should use unordered list..
+#include <set> // TODO maybe we should use unordered list..
 #include "tools.h"
 #include "geometry.h"
 

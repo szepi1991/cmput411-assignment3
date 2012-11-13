@@ -102,7 +102,7 @@ public:
 };
 
 inline std::ostream& operator<< (std::ostream &out, LineSegment const& l) {
-	out <<  "L[" << l.p0 << "," << l.d << "]";
+	out <<  "L[" << l.p0 << "+t*" << l.d << "]";
 	return out;
 }
 
@@ -123,7 +123,6 @@ inline std::ostream& operator<< (std::ostream &out, Triangle const& t) {
 	out <<  "T[" << t.v1 << "," << t.v2 << ", " << t.v3 << "]";
 	return out;
 }
-
 
 
 namespace interSectMatr {
