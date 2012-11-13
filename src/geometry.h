@@ -76,11 +76,18 @@ private:
 public:
 	Sphere(Point const& center, float radius) : c(center), rad(radius) {};
 	virtual ~Sphere() {};
-	// if it returns false, they don't intersect. That's all we guarantee!
-	bool intersects(Sphere const& o) const {
-		return ((c-o.c).getLength() > (rad+o.rad));
+	friend std::ostream& operator<< (std::ostream &out, Sphere const& sp);
+	// if it returns true, they can't intersect. That's all we guarantee!
+	bool tooFar(Sphere const& o) const {
+//		std::cout << *this << " too far from " << o << " = " << ((c-o.c).getLength() > (rad+o.rad)+EPS) << std::endl;
+		return ((c-o.c).getLength() > (rad+o.rad)+EPS);
 	}
 };
+
+inline std::ostream& operator<<(std::ostream& os, Sphere const& sp) {
+	os << "C[c" << sp.c << ";r" << sp.rad << "]";
+	return os;
+}
 
 class LineSegment {
 private:
@@ -90,7 +97,7 @@ public:
 	// if endpoints == true, e1 and e2 are taken to be the endpoints of the line segment.
 	// If it's false, then e1 is the translation to one endpoint, e2 is the
 	// direction and length of the segment
-	LineSegment(Point const& e1, Point const& e2, bool endPoints = true) : bounding(e1, 1000.0f) { // fake
+	LineSegment(Point const& e1, Point const& e2, bool endPoints = true) : bounding(e1, 10000.0f) { // fake
 		if (endPoints) {
 			p0 = e1;
 			d = e2-e1;
@@ -98,8 +105,7 @@ public:
 			p0 = e1;
 			d = e2;
 		}
-//		bounding = Sphere(p0, d.getLength()); // FIXME actually need this!
-		// FIXME PROBLEM!!!!!!!!!!! when setting the above bounding thing to 0 or 1000 running speed doesn't change!
+		bounding = Sphere(p0, d.getLength());
 	};
 	virtual ~LineSegment() {};
 	friend bool intersectLineSegWithTriangle(LineSegment const & l, Triangle const & t);
@@ -160,8 +166,7 @@ namespace interSectMatr {
 }
 
 inline bool intersectLineSegWithTriangle(LineSegment const & l, Triangle const & t) {
-	// TODO later actually pass in a bounding box for the line
-//	if (!l.getBoundSphere().intersects(t.getBoundSphere())) return false;
+	if (l.getBoundSphere().tooFar(t.getBoundSphere())) return false;
 
 	Point col1 = t.v1-t.v2, col2 = t.v1-t.v3;
 //	interSectMatr::A << col1.mx, col1.my, col1.mz,

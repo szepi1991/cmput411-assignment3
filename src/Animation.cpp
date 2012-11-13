@@ -14,6 +14,12 @@
 #include "sparseMatrixHelp.h"
 #include "Attachment.h"
 
+#ifdef __APPLE__
+#  include <GLUT/glut.h>
+#else
+#  include <GL/glut.h>
+#endif
+
 #include <fstream>
 #include <sstream>
 #include <cmath>
@@ -83,7 +89,7 @@ Animation::Animation(char *filename) throw(ParseException) :
 
 	curFrameFrac = -1;
 
-	// setup attachment vectors to have correct size
+	// TODO test: setup attachment vectors to have correct size
 	for (unsigned i = 0; i < SkeletonNode::getNumberOfNodes(); ++i) {
 		std::vector<LineSegment> empty;
 		intersectingAtt.push_back(empty);
@@ -213,19 +219,19 @@ void Animation::AttachBones() {
 
 		// now find the list of closest attachments (attachments is ordered so easy)
 		std::vector<SkeletonNode> closests;
-		float minDist1 = attachments.begin()->getDistance(); // there's always at least one
+		float minSimpleDist = attachments.begin()->getDistance(); // there's always at least one
 		for (std::set<Attachment>::const_iterator setIt = attachments.begin();
 				setIt != attachments.end(); ++setIt) {
-			if (setIt->getDistance() > minDist1+EPS) break; // no other can be good
+			if (setIt->getDistance() > minSimpleDist+EPS) break; // no other can be good
 			closests.push_back(setIt->getEndJoint());
 		}
 		for (std::vector<SkeletonNode>::const_iterator it = closests.begin(); it != closests.end(); ++it) {
-			simpleTripletList.push_back(Tr(vNum, it->getUpperBoneNum(), 1/double(closests.size()) ));
+			simpleTripletList.push_back(Tr(vNum, it->getUpperBoneNum(), 1.0/double(closests.size()) ));
 		}
 
 		// now find the list of closest VISIBLE attachments (attachments is ordered so easy)
 		std::vector<SkeletonNode> closestsVis;
-		float minDist2 = (--attachments.end())->getDistance(); // not smaller than any element
+		float minVisDist = (--attachments.end())->getDistance(); // not smaller than any element
 		bool distSet = false;
 		for (std::set<Attachment>::const_iterator setIt = attachments.begin();
 				setIt != attachments.end(); ++setIt) {
@@ -238,15 +244,20 @@ void Animation::AttachBones() {
 			}
 			connectedAtt[boneNum].push_back(attachLine); // TODO TESTING
 
-			if (setIt->getDistance() > minDist2+EPS) break; // no other can be good
+			if (setIt->getDistance() > minVisDist+EPS) break; // no other can be good
 			if (!distSet) {
 				distSet = true;
-				minDist2 = setIt->getDistance();
+				minVisDist = setIt->getDistance();
 			}
 			closestsVis.push_back(setIt->getEndJoint());
 		}
+		if (closestsVis.size() != 0) {
+			importances(vNum, 0) = 1.0 / sqr(minVisDist);
+		} else {
+			importances(vNum, 0) = 0;
+		}
 		for (std::vector<SkeletonNode>::const_iterator it = closestsVis.begin(); it != closestsVis.end(); ++it) {
-			visibleTripletList.push_back(Tr(vNum, it->getUpperBoneNum(), 1/double(closestsVis.size()) ));
+			visibleTripletList.push_back(Tr(vNum, it->getUpperBoneNum(), 1.0/double(closestsVis.size()) ));
 		}
 
 		vNum++;
@@ -316,6 +327,15 @@ void Animation::printAttachedMatrix(std::ostream& out, AttachMatrix mType) const
 		default:
 			throw 0;
 		}
+	}
+}
+
+void Animation::printImportances(std::ostream& out) const throw(WrongStateException) {
+	if (!model)
+		throw WrongStateException("Tried to print the attached matrix before setting a model for the skeleton");
+
+	for (int i = 0; i < importances.rows(); ++i) {
+		out << i << " " << importances(i, 0) << std::endl;
 	}
 }
 

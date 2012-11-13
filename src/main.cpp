@@ -258,6 +258,10 @@ void keyInput(unsigned char key, int x, int y) {
 		anim->printAttachedMatrix(outfile4, Animation::VISIBLE_M);
 		outfile4.close();
 
+		ofstream outfile5("h.out");
+		anim->printImportances(outfile5);
+		outfile5.close();
+
 		cout << "Finished writing output files." << endl;
 		break;
 	}

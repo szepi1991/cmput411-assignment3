@@ -12,13 +12,7 @@
 #include <vector>
 #include <boost/shared_ptr.hpp>
 #include <Eigen/Sparse>
-
-#ifdef __APPLE__
-#  include <GLUT/glut.h>
-#else
-#  include <GL/glut.h>
-#endif
-
+#include <Eigen/Dense>
 
 #include "SkeletonNode.h"
 #include "Mesh.h"
@@ -58,6 +52,7 @@ private:
 	boost::shared_ptr<Mesh> model; // TODO should be const Mesh??
 	Eigen::SparseMatrix<double> simpleConMat;
 	Eigen::SparseMatrix<double> visConMat;
+	Eigen::VectorXd importances;
 
 	// TODO testing
 	std::vector< std::vector<LineSegment> > intersectingAtt;
@@ -98,9 +93,11 @@ public:
 
 	void setModel(boost::shared_ptr<Mesh> const & m) {
 		model = m;
+		importances.resize(model->getNumVertices());
 		AttachBones();
 	}
 	void printAttachedMatrix(std::ostream& out, AttachMatrix mType) const throw(WrongStateException);
+	void printImportances(std::ostream& out) const throw(WrongStateException);
 
 	void selectNextBone() {
 		selectedBone++;

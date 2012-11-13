@@ -10,7 +10,7 @@ Development was done in eclipse, hence this folder actually can be imported into
 Alternatively, the code can be compiled and then run with the following commands (THIS DOES NOT WORK YET!):
 ```
 make
-./personviewer <meshfile.obj> <motiongile.bvh>
+./personviewer <meshfile.obj> <motionfile.bvh>
 ```
 
 ###### Assumptions about the project
@@ -26,6 +26,13 @@ This is hard to calculate and so i do
 <pre>	argmin_{bone b, the line segment l joining closest point of b with v does not cross any faces} ( length of l )</pre>
 as suggested in the notes.
 
+###### Attention required
+1. I use Eigen's ```computeInverseWithCheck()``` function for testing if a triangle intersects with a line segment. It seems like there's some randomness in there, so already the C matrix changes between runs.
+
+###### Credits / Libraries not written by me
+1. Boost
+2. Eigen
+3. VoxBits things (used for strong_ptr)
 
 --------------------
 Developed by David Szepesvari. Started November 8, 2012.
