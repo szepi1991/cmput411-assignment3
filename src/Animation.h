@@ -12,7 +12,6 @@
 #include <vector>
 #include <boost/shared_ptr.hpp>
 #include <Eigen/Sparse>
-#include <ctime>
 
 #ifdef __APPLE__
 #  include <GLUT/glut.h>
@@ -92,18 +91,8 @@ public:
 	}
 
 	void setModel(boost::shared_ptr<Mesh> const & m) {
-		time_t start,end;
 		model = m;
-		std::cout << "Attaching model to skeleton.." << std::endl;
-
-		time (&start);
-		AttachBones(false);
-		time (&end);
-		std::cout << "* simple attachment calculated in " << difftime(end,start) << "s" << std::endl;
-		time (&start);
-		AttachBones(true);
-		time (&end);
-		std::cout << "* visible attachment calculated in " << difftime(end,start) << "s" << std::endl;
+		AttachBones();
 	}
 	void printAttachedMatrix(std::ostream& out, AttachMatrix mType) const throw(WrongStateException);
 
@@ -140,7 +129,7 @@ public:
 	}
 
 private:
-	void AttachBones(bool visible);
+	void AttachBones();
 	void updateMeshSelected();
 
 };

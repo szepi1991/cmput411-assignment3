@@ -12,11 +12,13 @@
 #include "SkeletonNode.h"
 #include "tools.h"
 #include "sparseMatrixHelp.h"
+#include "Attachment.h"
 
 #include <fstream>
 #include <sstream>
 #include <cmath>
 #include <limits>
+#include <ctime>
 
 Animation::Animation(char *filename) throw(ParseException) :
 					figureSize(0), selectedBone(0), displayOnMeshType(SIMPLE_M) {
@@ -169,15 +171,18 @@ void Animation::outputBVH(std::ostream& out) {
 
 /** calculates an attachment to the bones of the specified model.
  * Note: here we assume there's one root only.
- *
- * visible == true iff when looking for closest bone we only count the visible ones!
  */
-void Animation::AttachBones(bool visible) {
+void Animation::AttachBones() {
+
+	std::cout << "Starting to attach bones.." << std::endl;
+	time_t start,end;
 
 	typedef Eigen::Triplet<double> Tr;
-	std::vector<Tr> tripletList;
+	std::vector<Tr> simpleTripletList;
+	std::vector<Tr> visibleTripletList;
 	unsigned numVert = model->getNumVertices();
-	tripletList.reserve(numVert*2);
+	simpleTripletList.reserve(numVert*2);
+	visibleTripletList.reserve(numVert*2);
 
 	// null model
 	boost::shared_ptr<Mesh> nullM;
@@ -189,6 +194,7 @@ void Animation::AttachBones(bool visible) {
 	const Point * vertex;
 	unsigned vNum = 0;
 
+	time (&start);
 	while (vertex = model->getVertex(vNum), vertex != NULL
 //			&& vNum < 10 // FIXME test
 										) {
@@ -196,40 +202,65 @@ void Animation::AttachBones(bool visible) {
 			std::cout << vNum << " ";
 			std::flush(std::cout);
 		}
-		std::vector<SkeletonNode> closests;
-		float temp = std::numeric_limits<float>::max();
+		std::set<Attachment> attachments;
 		if (debug::ison(debug::EVERYTHING))
 			std::cout << "+ Studying point " << vNum << " that is " << *vertex << std::endl;
-		if (!visible) {
-			roots[0].getClosestBones(Point(*vertex), temp, closests, nullM);
-		} else {
-			roots[0].getClosestBones(Point(*vertex), temp, closests, model);
+		roots[0].getClosestBones(Point(*vertex), attachments);
+
+		// now find the list of closest attachments (attachments is ordered so easy)
+		std::vector<SkeletonNode> closests;
+		float minDist = attachments.begin()->getDistance(); // there's always at least one
+		for (std::set<Attachment>::const_iterator setIt = attachments.begin();
+				setIt != attachments.end(); ++setIt) {
+			if (setIt->getDistance() > minDist+EPS) break; // no other can be good
+			closests.push_back(setIt->getEndJoint());
 		}
 		for (std::vector<SkeletonNode>::const_iterator it = closests.begin(); it != closests.end(); ++it) {
-			tripletList.push_back(Tr(vNum, it->getUpperBoneNum(), 1/double(closests.size()) ));
+			simpleTripletList.push_back(Tr(vNum, it->getUpperBoneNum(), 1/double(closests.size()) ));
 		}
+
+		// now find the list of closest VISIBLE attachments (attachments is ordered so easy)
+		std::vector<SkeletonNode> closestsVis;
+		minDist = (--attachments.end())->getDistance(); // not smaller than any element
+		bool distSet = false;
+		for (std::set<Attachment>::const_iterator setIt = attachments.begin();
+				setIt != attachments.end(); ++setIt) {
+			// FIXME if not visible continue
+
+			if (setIt->getDistance() > minDist+EPS) break; // no other can be good
+			if (!distSet) {
+				distSet = true;
+				minDist = setIt->getDistance();
+			}
+			closestsVis.push_back(setIt->getEndJoint());
+		}
+		for (std::vector<SkeletonNode>::const_iterator it = closestsVis.begin(); it != closestsVis.end(); ++it) {
+			visibleTripletList.push_back(Tr(vNum, it->getUpperBoneNum(), 1/double(closestsVis.size()) ));
+		}
+
 		vNum++;
 	}
 	if (debug::ison(debug::LITTLE)) std::cout << std::endl;
+	time (&end);
+
+	std::cout << "Simple and visible attachment matrices created in " << difftime(end,start) << "s" << std::endl;
 
 	if (debug::ison(debug::EVERYTHING)) {
-		std::cout << "num of triplets: " << tripletList.size() << std::endl;
-		for (std::vector<Tr>::const_iterator it = tripletList.begin(); it != tripletList.end(); it++) {
+		std::cout << "num of triplets: " << simpleTripletList.size() << std::endl;
+		for (std::vector<Tr>::const_iterator it = simpleTripletList.begin(); it != simpleTripletList.end(); it++) {
 			if (it->row() >= numVert || it->col() >= SkeletonNode::getNumberOfNodes()) {
 				std::cerr << "issue with: " << it->row() << ", " << it->col() << std::endl;
 			}
 		}
 	}
 
-	if (!visible) {
-		simpleConMat.resize(numVert, SkeletonNode::getNumberOfNodes());
-		simpleConMat.reserve(tripletList.size()*1.5);
-		simpleConMat.setFromTriplets(tripletList.begin(), tripletList.end());
-	} else {
-		visConMat.resize(numVert, SkeletonNode::getNumberOfNodes());
-		visConMat.reserve(tripletList.size()*1.5);
-		visConMat.setFromTriplets(tripletList.begin(), tripletList.end());
-	}
+	simpleConMat.resize(numVert, SkeletonNode::getNumberOfNodes());
+	simpleConMat.reserve(simpleTripletList.size()*1.5);
+	simpleConMat.setFromTriplets(simpleTripletList.begin(), simpleTripletList.end());
+
+	visConMat.resize(numVert, SkeletonNode::getNumberOfNodes());
+	visConMat.reserve(visibleTripletList.size()*1.5);
+	visConMat.setFromTriplets(visibleTripletList.begin(), visibleTripletList.end());
 }
 
 void Animation::updateMeshSelected() {

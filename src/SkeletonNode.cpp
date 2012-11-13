@@ -315,21 +315,12 @@ void SkeletonNode::printTreeBVH(std::ostream& out, unsigned level) const {
 }
 
 
-//void SkeletonNode::getClosestBones(Point p, float& minDist,
-//		std::vector<SkeletonNode> & closests) const {
-//	boost::shared_ptr<Mesh> n; // null pointer
-//	getClosestBones(p, minDist, closests, n);
-//}
 
 /**Returns the list of bones (identified by the end sites) that are closest
  * (within EPS distance) to the given point. The coordinates of p are given in
  * the frame of the parent of this node. For root this means world coordinates.
- *
- * if model is not NULL we only count visible connections
  */
-// FIXME have to finish adding visible connection!!!! Needs world coordinates
-void SkeletonNode::getClosestBones(Point p, float& minDist,
-		std::vector<SkeletonNode> & closests, boost::shared_ptr<Mesh> const & model) const {
+void SkeletonNode::getClosestBones(Point p, std::set<Attachment>& bones) const {
 	if (children.size() == 0) return;
 
 	// transform point so that bone is at (0,0)
@@ -375,34 +366,13 @@ void SkeletonNode::getClosestBones(Point p, float& minDist,
 					<< ". Dist=" << dist;
 		}
 
-		// if we it gets updated
-		if (dist < minDist + EPS) {
-
-//			// FIXME I should really test if this is actually the correct or not!!
-//			if (model)
-//				std::cout << "bone " << it->getUpperBoneNum() << " " << name
-//							<< " " << it->name << " attachmentPoint: " << closestPoint
-//							<< "->" << p << std::endl;
-			// make sure connecting line does not cross any faces (if model is specified)
-			if (model && model->intersects(LineSegment(closestPoint, p, false))) continue;
-
-			if (debug::ison(debug::EVERYTHING))
-				std::cout << " *";
-			if (dist < minDist - EPS) {
-				closests.clear();
-				minDist = dist;
-				if (debug::ison(debug::EVERYTHING))
-					std::cout << "**";
-			}
-			closests.push_back(*it);
-			if (debug::ison(debug::EVERYTHING))
-				std::cout << std::endl;
-		}
+		// now just put it in the set.. ordered automatically
+		bones.insert(Attachment(*it, closestPoint, dist));
 	}
 
 	for (std::vector<SkeletonNode>::const_iterator it = children.begin();
 											it != children.end(); ++it) {
-		it->getClosestBones(p, minDist, closests, model);
+		it->getClosestBones(p, bones);
 	}
 
 }

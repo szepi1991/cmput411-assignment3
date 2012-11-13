@@ -12,11 +12,12 @@
 #include "Quaternion.h"
 #include "geometry.h"
 #include "Mesh.h"
+#include "Attachment.h"
 
 #include <string>
 #include <vector>
 #include <fstream>
-//#include <boost/array.hpp>
+#include <set>
 #include <boost/shared_ptr.hpp>
 #include <Eigen/Dense>
 
@@ -68,7 +69,7 @@ public:
 
 
 
-class SkeletonNode {
+class SkeletonNode : public VoxBits::Cloneable {
 
 private:
 	// all these are just set up once then never should be changed!
@@ -140,9 +141,7 @@ public:
 		}
 	}
 
-//	void getClosestBones(Point p, float& minDist, std::vector<SkeletonNode> & closests) const;
-	void getClosestBones(Point p, float& minDist, std::vector<SkeletonNode> & closests,
-			boost::shared_ptr<Mesh> const & model) const;
+	void getClosestBones(Point p, std::set<Attachment>&) const;
 
 	// enlarges the axis-aligned box defined by the parameters so that each translated
 	// point fits into the box
@@ -155,6 +154,8 @@ public:
 
 	// node this only works as expected if we never delete a node!!
 	unsigned static getNumberOfNodes() {return nodeCounter;}
+
+	MAKE_CLONEABLE(SkeletonNode);
 };
 
 #endif /* SKELETONNODE_H_ */
