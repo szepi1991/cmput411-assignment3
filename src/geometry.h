@@ -13,6 +13,13 @@
 
 #include "tools.h"
 
+#ifdef __APPLE__
+#  include <GLUT/glut.h>
+#else
+#  include <GL/glut.h>
+#endif
+
+
 class Triangle;
 class Point;
 class Sphere;
@@ -101,6 +108,14 @@ public:
 	Sphere const& getBoundSphere() const { return bounding; }
 	Point const& getTrans() const { return p0; }
 	Point const& getShift() const { return d; }
+
+	void display() const {
+		Point e2 = p0 + d;
+		glBegin(GL_LINES);
+			glVertex3f(p0.x(), p0.y(), p0.z());
+			glVertex3f(e2.x(), e2.y(), e2.z());
+		glEnd();
+	}
 };
 
 inline std::ostream& operator<< (std::ostream &out, LineSegment const& l) {

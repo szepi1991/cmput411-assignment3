@@ -82,6 +82,13 @@ Animation::Animation(char *filename) throw(ParseException) :
 	virtFPS = stdFPS;
 
 	curFrameFrac = -1;
+
+	// setup attachment vectors to have correct size
+	for (unsigned i = 0; i < SkeletonNode::getNumberOfNodes(); ++i) {
+		std::vector<LineSegment> empty;
+		intersectingAtt.push_back(empty);
+		connectedAtt.push_back(empty);
+	}
 }
 
 Animation::~Animation() {
@@ -193,7 +200,7 @@ void Animation::AttachBones() {
 
 	time (&start);
 	while (vertex = model->getVertex(vNum), vertex != NULL
-			&& vNum < 100 // FIXME test
+//			&& vNum < 200 // FIXME test
 										) {
 		if (debug::ison(debug::LITTLE)) {
 			std::cout << vNum << " ";
@@ -222,8 +229,14 @@ void Animation::AttachBones() {
 		bool distSet = false;
 		for (std::set<Attachment>::const_iterator setIt = attachments.begin();
 				setIt != attachments.end(); ++setIt) {
+			unsigned boneNum = setIt->getEndJoint().getUpperBoneNum();
+
 			LineSegment attachLine(setIt->getAttachPoint(), *vertex);
-			if (model->intersects(attachLine)) continue; // not visible
+			if (model->intersects(attachLine)) {
+				intersectingAtt[boneNum].push_back(attachLine); // TODO TESTING
+				continue; // not visible
+			}
+			connectedAtt[boneNum].push_back(attachLine); // TODO TESTING
 
 			if (setIt->getDistance() > minDist2+EPS) break; // no other can be good
 			if (!distSet) {
@@ -323,7 +336,26 @@ void Animation::display(bool showSelBone) {
 	for (unsigned i = 0; i < roots.size(); ++i)
 		roots[i].display(curFrameFrac, selectedBone);
 
-    glLineWidth(1); // assume it's 1 by def
+	float currentColor[4];
+	glGetFloatv(GL_CURRENT_COLOR,currentColor);
+
+    glLineWidth(2);
+    // also draw the good and bad attachements focrresponding to currently selected bone
+	glColor3f(0.0, 0.0, 1.0); // blue
+	for (std::vector<LineSegment>::const_iterator it = intersectingAtt[selectedBone].begin();
+			it != intersectingAtt[selectedBone].end(); ++it) {
+		it->display();
+	}
+	// draw good connections
+	glColor3f(0.0, 1.0, 0.0); // green
+	for (std::vector<LineSegment>::const_iterator it = connectedAtt[selectedBone].begin();
+			it != connectedAtt[selectedBone].end(); ++it) {
+		it->display();
+	}
+
+	glColor4fv(currentColor); // reset
+    glLineWidth(1); // assume it's 3
+
 
 }
 

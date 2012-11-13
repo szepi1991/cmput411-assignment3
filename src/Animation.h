@@ -24,6 +24,8 @@
 #include "Mesh.h"
 #include "myexceptions.h"
 
+class LineSegment;
+
 class Animation {
 public:
 	enum AttachMatrix {SIMPLE_M, VISIBLE_M};
@@ -56,6 +58,10 @@ private:
 	boost::shared_ptr<Mesh> model; // TODO should be const Mesh??
 	Eigen::SparseMatrix<double> simpleConMat;
 	Eigen::SparseMatrix<double> visConMat;
+
+	// TODO testing
+	std::vector< std::vector<LineSegment> > intersectingAtt;
+	std::vector< std::vector<LineSegment> > connectedAtt;
 
 public:
 

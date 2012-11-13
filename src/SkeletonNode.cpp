@@ -353,10 +353,10 @@ void SkeletonNode::getClosestBones(Point p, std::set<Attachment>& bones) const {
 		}
 		else {
 			Eigen::Vector3f v(p.x(),p.y(),p.z());
-			Eigen::Vector3f delta = (it->projToBoneM)*v;
+			Eigen::Vector3f delta = (it->projToBoneM)*v; // vector from attachement point to p
 
 			// connection is from projmatrix*p=delta (have to put it in world coords!) to p
-			closestPoint = Point(delta)+worldOffset;
+			closestPoint = p-Point(delta)+worldOffset;
 
 			dist = delta.squaredNorm(); // length
 		}
