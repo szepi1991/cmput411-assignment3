@@ -262,6 +262,14 @@ void keyInput(unsigned char key, int x, int y) {
 		anim->printImportances(outfile5);
 		outfile5.close();
 
+		ofstream outfile6("A.out");
+		model->printAdjMatrix(outfile6);
+		outfile6.close();
+
+		ofstream outfile7("L.out");
+		model->printLaplacian(outfile7);
+		outfile7.close();
+
 		cout << "Finished writing output files." << endl;
 		break;
 	}

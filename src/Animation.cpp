@@ -335,7 +335,8 @@ void Animation::printImportances(std::ostream& out) const throw(WrongStateExcept
 		throw WrongStateException("Tried to print the attached matrix before setting a model for the skeleton");
 
 	for (int i = 0; i < importances.rows(); ++i) {
-		out << i << " " << importances(i, 0) << std::endl;
+		out << i << " " << importances(i, 0);
+		out << std::endl; //for some reason eclipse does not like it in the previous row
 	}
 }
 
@@ -356,26 +357,28 @@ void Animation::display(bool showSelBone) {
 	for (unsigned i = 0; i < roots.size(); ++i)
 		roots[i].display(curFrameFrac, selectedBone);
 
-	float currentColor[4];
-	glGetFloatv(GL_CURRENT_COLOR,currentColor);
+	if (debug::ison(debug::EVERYTHING)) {
+		float currentColor[4];
+		glGetFloatv(GL_CURRENT_COLOR,currentColor);
 
-    glLineWidth(2);
-    // also draw the good and bad attachements focrresponding to currently selected bone
-	glColor3f(0.0, 0.0, 1.0); // blue
-	for (std::vector<LineSegment>::const_iterator it = intersectingAtt[selectedBone].begin();
-			it != intersectingAtt[selectedBone].end(); ++it) {
-		it->display();
+	    glLineWidth(2);
+	    // also draw the good and bad attachements focrresponding to currently selected bone
+		glColor3f(0.0, 0.0, 1.0); // blue
+		for (std::vector<LineSegment>::const_iterator it = intersectingAtt[selectedBone].begin();
+				it != intersectingAtt[selectedBone].end(); ++it) {
+			it->display();
+		}
+		// draw good connections
+		glColor3f(0.0, 1.0, 0.0); // green
+		for (std::vector<LineSegment>::const_iterator it = connectedAtt[selectedBone].begin();
+				it != connectedAtt[selectedBone].end(); ++it) {
+			it->display();
+		}
+
+		glColor4fv(currentColor); // reset
 	}
-	// draw good connections
-	glColor3f(0.0, 1.0, 0.0); // green
-	for (std::vector<LineSegment>::const_iterator it = connectedAtt[selectedBone].begin();
-			it != connectedAtt[selectedBone].end(); ++it) {
-		it->display();
-	}
 
-	glColor4fv(currentColor); // reset
-    glLineWidth(1); // assume it's 3
-
+    glLineWidth(1); // assume it's 1
 
 }
 

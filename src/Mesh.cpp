@@ -15,6 +15,7 @@
 #else
 #  include <GL/glut.h>
 #endif
+#include <Eigen/Dense>
 
 
 void Mesh::loadModel(char* modelFile) throw (ParseException) {
@@ -104,15 +105,94 @@ void Mesh::loadModel(char* modelFile) throw (ParseException) {
 		throw ParseException("", "__ Unable to open the specified .obj file __");
 	}
 
-	// create the triangles corresponding to the faces;
-//	std::vector<Triangle> facesTr;
+	typedef Eigen::Triplet<double> Tr;
+	std::vector<Tr> adjTripletList;
+	adjTripletList.reserve(getNumVertices()*4);
+
 	for (std::vector<Face>::const_iterator it = faces.begin(); it != faces.end(); ++it) {
-		facesTr.push_back(Triangle(	vertices[(*it)[0].first],
-									vertices[(*it)[1].first],
-									vertices[(*it)[2].first]));
+		unsigned vNums[3];
+		vNums[0] = (*it)[0].first;
+		vNums[1] = (*it)[1].first;
+		vNums[2] = (*it)[2].first;
+		// create the triangles corresponding to the faces;
+		facesTr.push_back(Triangle(	vertices[vNums[0]],
+									vertices[vNums[1]],
+									vertices[vNums[2]]));
+
+		// create  adjacency matrix; for each pair of i,j adj(vNums[i], vNums[j]) = 1;
+		for (unsigned i = 0; i < 3; ++i) {
+			for (unsigned j = 0; j < 3; ++j) {
+				if (i == j) continue;
+				adjTripletList.push_back(Tr(vNums[i], vNums[j], 1));
+			}
+		}
 	}
 
+	adjacencyMatrix.resize(getNumVertices(), getNumVertices());
+	adjacencyMatrix.reserve(adjTripletList.size()*1.5);
+	adjacencyMatrix.setFromTriplets(adjTripletList.begin(), adjTripletList.end());
 
+	findLaplacian();
+}
+
+void Mesh::findLaplacian() {
+	Eigen::VectorXd ones = Eigen::VectorXd::Ones(getNumVertices());
+	Eigen::VectorXd res = adjacencyMatrix*ones;
+
+//	// TODO slow way -- see online tutorial on sparse matrices "Iterating over the nonzero coefficients"
+//	std::ofstream outres("A1.out");
+//	for (int i = 0; i < res.rows(); ++i) {
+//		outres << " " << res(i);
+//		outres << std::endl;
+//	}
+//	outres.close();
+
+	typedef Eigen::Triplet<double> Tr;
+	std::vector<Tr> deltaTriplets;
+	deltaTriplets.reserve(getNumVertices());
+	for (unsigned i = 0; i < getNumVertices(); ++i) {
+		deltaTriplets.push_back(Tr(i, i, res(i)));
+	}
+
+	Eigen::SparseMatrix<double> delta(getNumVertices(), getNumVertices());
+	delta.reserve(getNumVertices());
+	delta.setFromTriplets(deltaTriplets.begin(), deltaTriplets.end());
+
+//	// TODO slow way -- see online tutorial on sparse matrices "Iterating over the nonzero coefficients"
+//	std::ofstream outdelta("delta.out");
+//	for (int i = 0; i < delta.rows(); ++i) {
+//		outdelta << i;
+//		for (int j = 0; j < delta.cols(); ++j) {
+//			if (delta.coeff(i,j) != 0) outdelta << " " << j << ":" << delta.coeff(i,j);
+//		}
+//		outdelta << std::endl;
+//	}
+//	outdelta.close();
+
+	laplacian = delta - adjacencyMatrix;
+}
+
+
+void Mesh::printAdjMatrix(std::ostream& out) const {
+	// TODO slow way -- see online tutorial on sparse matrices "Iterating over the nonzero coefficients"
+	for (int i = 0; i < adjacencyMatrix.rows(); ++i) {
+		out << i;
+		for (int j = 0; j < adjacencyMatrix.cols(); ++j) {
+			if (abs(adjacencyMatrix.coeff(i,j)) > EPS) out << " " << j;
+		}
+		out << std::endl;
+	}
+}
+
+void Mesh::printLaplacian(std::ostream& out) const {
+	// TODO slow way -- see online tutorial on sparse matrices "Iterating over the nonzero coefficients"
+	for (int i = 0; i < laplacian.rows(); ++i) {
+		out << i;
+		for (int j = 0; j < laplacian.cols(); ++j) {
+			if (abs(laplacian.coeff(i,j)) > EPS) out << " " << j << " " << laplacian.coeff(i,j);
+		}
+		out << std::endl;
+	}
 }
 
 void Mesh::printMesh(std::ostream& out) const {

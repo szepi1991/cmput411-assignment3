@@ -11,6 +11,8 @@
 #include <vector>
 #include <boost/shared_ptr.hpp>
 #include <set> // TODO maybe we should use unordered list..
+#include <Eigen/Sparse>
+
 #include "tools.h"
 #include "geometry.h"
 
@@ -26,13 +28,16 @@ private:
 	// for speeding things up
 	std::vector<Triangle> facesTr;
 
+	Eigen::SparseMatrix<double> adjacencyMatrix;
+	Eigen::SparseMatrix<double> laplacian;
+
 	// optional
 	boost::shared_ptr< std::set<unsigned> > selected;
 
-
-
 	// TODO only for testing
 	std::vector<std::pair<LineSegment, Triangle> > intersections;
+
+	void findLaplacian();
 public:
 	unsigned selectedIntersection; // == intersections.size() means none
 	void nextIntersection(bool message = true) {
@@ -54,6 +59,8 @@ public:
 	void loadModel(char* inputfile) throw (ParseException);
 	void display() const;
 	void printMesh(std::ostream& out) const;
+	void printAdjMatrix(std::ostream& out) const;
+	void printLaplacian(std::ostream& out) const;
 	virtual ~Mesh();
 	unsigned getNumVertices() const { return vertices.size(); }
 	void setSelectedVerts(boost::shared_ptr< std::set<unsigned> > const& sel) {
