@@ -333,7 +333,7 @@ void Animation::findFinalAttachmentWeights(Eigen::SparseMatrix<double>* connMatr
 
 	// check correctness
 	Eigen::MatrixXd res = attachWeight * Eigen::VectorXd::Ones(size);
-	std::cout << "These all should be zero in the next line:" << std::endl << "\t";
+	std::cout << "These all should be ones in the next line:" << std::endl << "\t";
 	for (int i = 0; i < size; ++i) {
 		std::cout << " " << res(i);
 	}
@@ -408,6 +408,11 @@ void Animation::printImportances(std::ostream& out) const throw(WrongStateExcept
 	}
 }
 
+void Animation::precalculateMesh() {
+	std::cout << "Pre-calculating mesh animation..";
+	std::cout << "Done" << std::endl;
+}
+
 
 // displays the current frame (that has been already calculated from curTime)
 // selectedbone is going to be drawn with red
@@ -422,7 +427,7 @@ void Animation::display(bool showSelBone) {
 	timeOfPreviousCall = curTime;
 
 	int frame = int(curFrameFrac); // should be ok .. handles -1 and positive values?
-	model->display(frame);
+	model->display(-1); // FIXME later this should be frame
 
 //	if (MYINFO) std::cout << "Drawing Frame " << curFrameFrac << std::endl;
 	for (unsigned i = 0; i < roots.size(); ++i) {
