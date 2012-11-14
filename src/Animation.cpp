@@ -207,6 +207,7 @@ void Animation::attachBonesToMesh() {
 	unsigned vNum = 0;
 
 	std::ofstream logfile("attachments.log");
+	std::ofstream sdistsfile("Sdists.log");
 
 	time (&start);
 	while (vertex = model->getVertex(vNum), vertex != NULL
@@ -242,25 +243,18 @@ void Animation::attachBonesToMesh() {
 		for (std::set<Attachment>::const_iterator setIt = attachments.begin();
 				setIt != attachments.end(); ++setIt) {
 			if (setIt->getDistance() > minSimpleDist+EPS) break; // no other can be good
-//			if (setIt->getDistance() > minSimpleDist) break; // no other can be good
 			closests.push_back(setIt->getEndJoint());
 		}
-//		if (closests.size() > 1) {
-//			std::cout << "There's a vertex that is closest to more than 1 bone" << std::endl;
-//		} else {
-//			std::set<Attachment>::const_iterator setIt = attachments.begin();
-//			float diff = setIt->getDistance();
-//			++setIt;
-//			diff -= setIt->getDistance();
-//			std::cout << "Difference between first and second is " << diff << std::endl;
-//		}
 		for (std::vector<SkeletonNode>::const_iterator it = closests.begin(); it != closests.end(); ++it) {
 			simpleTripletList.push_back(Tr(vNum, it->getUpperBoneNum(), 1.0/double(closests.size()) ));
 		}
 
+		// TODO testing
+		sdistsfile << vNum << " " << minSimpleDist << std::endl;
+
 		// now find the list of closest VISIBLE attachments (attachments is ordered so easy)
 		std::vector<SkeletonNode> closestsVis;
-		float minVisDist = (--attachments.end())->getDistance(); // not smaller than any element
+		float minVisDist = std::numeric_limits<float>::max()-2*EPS; // not smaller than any element
 		bool distSet = false;
 		for (std::set<Attachment>::const_iterator setIt = attachments.begin();
 				setIt != attachments.end(); ++setIt) {
@@ -271,13 +265,13 @@ void Animation::attachBonesToMesh() {
 				intersectingAtt[boneNum].push_back(attachLine); // TODO TESTING
 				continue; // not visible
 			}
-			connectedAtt[boneNum].push_back(attachLine); // TODO TESTING
 
 			if (setIt->getDistance() > minVisDist+EPS) break; // no other can be good
 			if (!distSet) {
 				distSet = true;
 				minVisDist = setIt->getDistance();
 			}
+			connectedAtt[boneNum].push_back(attachLine); // TODO TESTING
 			closestsVis.push_back(setIt->getEndJoint());
 		}
 		if (closestsVis.size() != 0) {
@@ -295,6 +289,7 @@ void Animation::attachBonesToMesh() {
 	time (&end);
 
 	logfile.close();
+	sdistsfile.close();
 	std::cout << "Simple and visible attachment matrices created in " << difftime(end,start) << "s" << std::endl;
 
 //	if (debug::ison(debug::EVERYTHING)) {

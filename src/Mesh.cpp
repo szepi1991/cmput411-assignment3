@@ -237,9 +237,9 @@ void Mesh::display() const {
 				Point n = normals[(*it)[vn].second];
 				Point v = vertices[(*it)[vn].first];
 				if (selected->find( (*it)[vn].first ) != selected->end() ) {
-					glColor3f(1.0, 0.0, 0.0); // red
+					glColor4f(1.0, 0.0, 0.0, 0.5); // red
 				} else {
-					glColor3f(1.0, 1.0, 1.0);
+					glColor4f(1.0, 1.0, 1.0, 0.5);
 				}
 				glNormal3f(n.x(), n.y(), n.z());
 				glVertex3f(v.x(), v.y(), v.z());

@@ -190,7 +190,7 @@ inline bool intersectLineSegWithTriangle(LineSegment const & l, Triangle const &
 	// 0 <= b, g. b+g <= 1. 0 < l < 1
 	return (interSectMatr::x(0, 0) >= 0 && interSectMatr::x(1,0) >= 0 &&
 			interSectMatr::x(0,0) + interSectMatr::x(1,0) <= 1 &&
-			EPS < interSectMatr::x(2,0) && interSectMatr::x(2,0) < 1-EPS ); // TODO or use 0?
+			0.01 < interSectMatr::x(2,0) && interSectMatr::x(2,0) < 0.99 ); // TODO or use 0?
 }
 
 
