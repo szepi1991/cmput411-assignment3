@@ -101,6 +101,7 @@ public:
 	}
 	void printAttachedMatrix(std::ostream& out, AttachMatrix mType) const throw(WrongStateException);
 	void printImportances(std::ostream& out) const throw(WrongStateException);
+	void printFinalAttachMatrix(std::ostream& out) const throw(WrongStateException);
 
 	void selectNextBone() {
 		selectedBone++;

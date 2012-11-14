@@ -6,6 +6,7 @@
  */
 
 #include "Mesh.h"
+#include "sparseMatrixHelp.h"
 #include <string>
 #include <fstream>
 #include <sstream>
@@ -147,16 +148,18 @@ void Mesh::findLaplacian() {
 //	}
 //	outres.close();
 
-	typedef Eigen::Triplet<double> Tr;
-	std::vector<Tr> deltaTriplets;
-	deltaTriplets.reserve(getNumVertices());
-	for (unsigned i = 0; i < getNumVertices(); ++i) {
-		deltaTriplets.push_back(Tr(i, i, res(i)));
-	}
+//	typedef Eigen::Triplet<double> Tr;
+//	std::vector<Tr> deltaTriplets;
+//	deltaTriplets.reserve(getNumVertices());
+//	for (unsigned i = 0; i < getNumVertices(); ++i) {
+//		deltaTriplets.push_back(Tr(i, i, res(i)));
+//	}
+//
+//	Eigen::SparseMatrix<double> delta(getNumVertices(), getNumVertices());
+//	delta.reserve(getNumVertices());
+//	delta.setFromTriplets(deltaTriplets.begin(), deltaTriplets.end());
 
-	Eigen::SparseMatrix<double> delta(getNumVertices(), getNumVertices());
-	delta.reserve(getNumVertices());
-	delta.setFromTriplets(deltaTriplets.begin(), deltaTriplets.end());
+	Eigen::SparseMatrix<double> deltaM = delta(res);
 
 //	// TODO slow way -- see online tutorial on sparse matrices "Iterating over the nonzero coefficients"
 //	std::ofstream outdelta("delta.out");
@@ -169,7 +172,7 @@ void Mesh::findLaplacian() {
 //	}
 //	outdelta.close();
 
-	laplacian = delta - adjacencyMatrix;
+	laplacian = deltaM - adjacencyMatrix;
 }
 
 

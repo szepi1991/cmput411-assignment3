@@ -270,6 +270,10 @@ void keyInput(unsigned char key, int x, int y) {
 		model->printLaplacian(outfile7);
 		outfile7.close();
 
+		ofstream outfile8("W.out");
+		anim->printFinalAttachMatrix(outfile8);
+		outfile8.close();
+
 		cout << "Finished writing output files." << endl;
 		break;
 	}

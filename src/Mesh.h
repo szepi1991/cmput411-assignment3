@@ -61,6 +61,7 @@ public:
 	void printMesh(std::ostream& out) const;
 	void printAdjMatrix(std::ostream& out) const;
 	void printLaplacian(std::ostream& out) const;
+	Eigen::SparseMatrix<double> const& getLaplacian() const { return laplacian; }
 	virtual ~Mesh();
 	unsigned getNumVertices() const { return vertices.size(); }
 	void setSelectedVerts(boost::shared_ptr< std::set<unsigned> > const& sel) {

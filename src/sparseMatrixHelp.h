@@ -25,5 +25,41 @@ inline void printSparseRow(std::ostream& out, Eigen::SparseMatrix<T> const & toP
 	out << std::endl;
 }
 
+//// vec needs exactly 1  col
+//template <class T>
+//inline Eigen::SparseMatrix<T> delta(Eigen::MatrixBase<T> const& vec ) {
+//	if (vec.cols() != 1) throw 0;
+//	unsigned r = vec.rows();
+//
+//	typedef Eigen::Triplet<double> Tr;
+//	std::vector<Tr> deltaTriplets;
+//	deltaTriplets.reserve(r);
+//	for (unsigned i = 0; i < r; ++i) {
+//		deltaTriplets.push_back(Tr(i, i, vec(i)));
+//	}
+//
+//	Eigen::SparseMatrix<T> delta(r, r);
+//	delta.reserve(r);
+//	delta.setFromTriplets(deltaTriplets.begin(), deltaTriplets.end());
+//	return delta;
+//}
+
+// vec needs exactly 1  col
+inline Eigen::SparseMatrix<double> delta(Eigen::VectorXd const& vec ) {
+	unsigned r = vec.rows();
+
+	typedef Eigen::Triplet<double> Tr;
+	std::vector<Tr> deltaTriplets;
+	deltaTriplets.reserve(r);
+	for (unsigned i = 0; i < r; ++i) {
+		deltaTriplets.push_back(Tr(i, i, vec(i)));
+	}
+
+	Eigen::SparseMatrix<double> delta(r, r);
+	delta.reserve(r);
+	delta.setFromTriplets(deltaTriplets.begin(), deltaTriplets.end());
+	return delta;
+}
+
 
 #endif /* SPARESMATRIXHELP_H_ */

@@ -314,8 +314,30 @@ void Animation::attachBonesToMesh() {
 
 void Animation::findFinalAttachmentWeights(Eigen::SparseMatrix<double>* connMatrixToUse) {
 	// we do it for each column separately
-	attachWeight.resize(model->getNumVertices(), model->getNumVertices());
-	// FIXME finish
+	std::cout << "Calculating W.." << std::endl;
+	int size = model->getNumVertices();
+	attachWeight.resize(size, size);
+
+	typedef Eigen::SparseMatrix<double> SpMat;
+	SpMat Dh = delta(importances);
+	SpMat A = model->getLaplacian() + Dh;
+	Eigen::SimplicialCholesky<SpMat> chol(A); // performs a Cholesky factorization of A
+	// for each column of visConMat do it separately:
+	for (int curCol = 0; curCol < visConMat.cols(); ++curCol) {
+		Eigen::VectorXd col = visConMat.col(curCol);
+		Eigen::VectorXd b = Dh*col;
+		attachWeight.col(curCol) = chol.solve(b);
+//		Eigen::VectorXd x = chol.solve(b); // use the factorization to solve for the given right hand side
+	}
+	std::cout << "Done." << std::endl;
+
+	// check correctness
+	Eigen::MatrixXd res = attachWeight * Eigen::VectorXd::Ones(size);
+	std::cout << "These all should be zero in the next line:" << std::endl << "\t";
+	for (int i = 0; i < size; ++i) {
+		std::cout << " " << res(i);
+	}
+	std::cout << std::endl;
 }
 
 void Animation::updateMeshSelected() {
@@ -360,6 +382,19 @@ void Animation::printAttachedMatrix(std::ostream& out, AttachMatrix mType) const
 		default:
 			throw 0;
 		}
+	}
+}
+
+void Animation::printFinalAttachMatrix(std::ostream& out) const throw(WrongStateException) {
+	if (!model)
+		throw WrongStateException("Tried to print the attached matrix before setting a model for the skeleton");
+//	out << attachWeight;
+	for (int i = 0; i < attachWeight.rows(); ++i) {
+		out << i;
+		for (int j = 0; j < attachWeight.rows(); ++j) {
+			out << " " << attachWeight(i,j);
+		}
+		out << std::endl;
 	}
 }
 
