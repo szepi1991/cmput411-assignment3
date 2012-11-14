@@ -21,9 +21,13 @@ typedef std::vector< std::pair< unsigned, unsigned> > Face;
 
 class Mesh {
 private:
+	float lightPos[4];
+
 	std::vector< std::vector<Point> > verticesList; // as read from the file
 	std::vector< std::vector<Point> > normalsList; // as read from the file
 	std::vector<Face> faces;
+
+	bool wireFrame;
 
 	// for speeding things up
 	std::vector<Triangle> facesTr; // the original ones!
@@ -53,11 +57,16 @@ public:
 		}
 	}
 
-	Mesh() : selectedIntersection(0) {
+	Mesh() : wireFrame(true), selectedIntersection(0) {
+		lightPos[0] = 0.0;
+		lightPos[1] = 10.5;
+		lightPos[2] = 13.0;
+		lightPos[3] = 1.0;
+
 		selected.reset( new std::set<unsigned> );
 	}
 	void loadModel(char* inputfile) throw (ParseException);
-	void display(unsigned = 0) const;
+	void display(int = -1) const;
 	void printOrigMesh(std::ostream& out) const;
 	void printAdjMatrix(std::ostream& out) const;
 	void printLaplacian(std::ostream& out) const;
@@ -82,6 +91,8 @@ public:
 		verticesList.push_back(verts);
 		normalsList.push_back(normals);
 	}
+
+	void setWireFrame(bool val) { wireFrame = val; }
 };
 
 #endif /* MESH_H_ */

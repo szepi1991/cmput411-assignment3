@@ -28,9 +28,7 @@ unsigned SkeletonNode::nodeCounter=0;
 static boost::shared_ptr<Animation> anim;
 static Camera cam;
 static boost::shared_ptr<Mesh> model;
-static bool wireFrame = true;
 
-static float lightPos[] = { 0.0, 10.5, 13.0, 1.0 };
 
 static const unsigned SCR_WIDTH = 800, SCR_HEIGHT = 600;
 
@@ -156,10 +154,7 @@ void drawScene(void)
 	// Clear screen to background color.
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	if (wireFrame)
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	else
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
@@ -179,15 +174,6 @@ void drawScene(void)
 	glColor3f(1.0,1.0,0.1);
 	anim->display(true);
 
-	// mesh
-	glColor3f(1.0, 1.0, 1.0);
-	if (!wireFrame) {
-		glEnable(GL_LIGHTING);
-		glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
-		glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-//		glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, skinCol);
-	}
-	model->display();
 	glDisable(GL_LIGHTING);
 
 	glutSwapBuffers();
@@ -229,13 +215,13 @@ void keyInput(unsigned char key, int x, int y) {
 		anim->addFPS(-10);
 		break;
 	case 'l':
-		wireFrame = true;
+		model->setWireFrame(true);
 		glDisable(GL_CULL_FACE);
 //		glDisable(GL_LIGHTING);
 //		glDisable(GL_COLOR_MATERIAL);
 		break;
 	case 'L':
-		wireFrame = false;
+		model->setWireFrame(false);
 		glEnable(GL_CULL_FACE);
 //		glEnable(GL_LIGHTING);
 //		glEnable(GL_COLOR_MATERIAL);

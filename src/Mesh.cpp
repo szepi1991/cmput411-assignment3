@@ -240,7 +240,21 @@ bool Mesh::intersects(LineSegment const & l) {
 }
 
 
-void Mesh::display(unsigned frame) const { // note default 0
+void Mesh::display(int frame) const { // note default -1
+	frame++;
+
+	glLineWidth(1);
+	glColor3f(1.0, 1.0, 1.0);
+	if (!wireFrame) {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		glEnable(GL_LIGHTING);
+		glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
+		glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+//		glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, skinCol);
+	} else {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	}
+
 	// TODO optimize the selected stuff! maybe boost unordered_set
 	for (std::vector<Face>::const_iterator it = faces.begin(); it != faces.end(); ++it) {
 		glBegin(GL_TRIANGLES);
@@ -296,6 +310,7 @@ void Mesh::display(unsigned frame) const { // note default 0
 		glPolygonMode(GL_FRONT_AND_BACK, polyMode);
 	}
 }
+
 
 Mesh::~Mesh() {
 }

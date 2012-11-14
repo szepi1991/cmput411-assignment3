@@ -421,9 +421,12 @@ void Animation::display(bool showSelBone) {
 	}
 	timeOfPreviousCall = curTime;
 
+	int frame = int(curFrameFrac); // should be ok .. handles -1 and positive values?
+	model->display(frame);
+
 //	if (MYINFO) std::cout << "Drawing Frame " << curFrameFrac << std::endl;
 	for (unsigned i = 0; i < roots.size(); ++i) {
-		roots[i].display(curFrameFrac, selectedBone);
+		roots[i].display(curFrameFrac, selectedBone); // TODO perhaps swtich to frame here too??
 	}
 
 	if (debug::ison(debug::EVERYTHING)) {
