@@ -26,6 +26,8 @@
 #include <limits>
 #include <ctime>
 
+bool Animation::test59Vert = false;
+
 Animation::Animation(char *filename) throw(ParseException) :
 					figureSize(0), selectedBone(0), displayOnMeshType(SIMPLE_M) {
 
@@ -185,7 +187,7 @@ void Animation::outputBVH(std::ostream& out) {
 /** calculates an attachment to the bones of the specified model.
  * Note: here we assume there's one root only.
  */
-void Animation::AttachBones() {
+void Animation::attachBonesToMesh() {
 
 	std::cout << "Starting to attach bones.." << std::endl;
 	time_t start,end;
@@ -204,18 +206,35 @@ void Animation::AttachBones() {
 	const Point * vertex;
 	unsigned vNum = 0;
 
+	std::ofstream logfile("attachments.log");
+
 	time (&start);
 	while (vertex = model->getVertex(vNum), vertex != NULL
-//			&& vNum < 200 // TODO test
+//			&& vNum < 10 // FIXME test
 										) {
 		if (debug::ison(debug::LITTLE)) {
 			std::cout << vNum << " ";
 			std::flush(std::cout);
 		}
+		if (vNum == 59) test59Vert = true;
+		else test59Vert = false;
+
 		std::set<Attachment> attachments;
 		if (debug::ison(debug::EVERYTHING))
 			std::cout << "+ Studying point " << vNum << " that is " << *vertex << std::endl;
 		roots[0].getClosestBones(Point(*vertex), attachments);
+
+		if (attachments.size()+1 != SkeletonNode::getNumberOfNodes()) {
+			std::cout << "attachments != bones: " << attachments.size() << ", " << SkeletonNode::getNumberOfNodes() << std::endl;
+			assert(false);
+		}
+
+		// TODO testing
+		logfile << "---- Vertex " << vNum << ": " << *vertex << " ----" << std::endl;
+		for (std::set<Attachment>::const_iterator setIt = attachments.begin();
+				setIt != attachments.end(); ++setIt) {
+			logfile << *setIt << std::endl;
+		}
 
 		// now find the list of closest attachments (attachments is ordered so easy)
 		std::vector<SkeletonNode> closests;
@@ -223,8 +242,18 @@ void Animation::AttachBones() {
 		for (std::set<Attachment>::const_iterator setIt = attachments.begin();
 				setIt != attachments.end(); ++setIt) {
 			if (setIt->getDistance() > minSimpleDist+EPS) break; // no other can be good
+//			if (setIt->getDistance() > minSimpleDist) break; // no other can be good
 			closests.push_back(setIt->getEndJoint());
 		}
+//		if (closests.size() > 1) {
+//			std::cout << "There's a vertex that is closest to more than 1 bone" << std::endl;
+//		} else {
+//			std::set<Attachment>::const_iterator setIt = attachments.begin();
+//			float diff = setIt->getDistance();
+//			++setIt;
+//			diff -= setIt->getDistance();
+//			std::cout << "Difference between first and second is " << diff << std::endl;
+//		}
 		for (std::vector<SkeletonNode>::const_iterator it = closests.begin(); it != closests.end(); ++it) {
 			simpleTripletList.push_back(Tr(vNum, it->getUpperBoneNum(), 1.0/double(closests.size()) ));
 		}
@@ -265,16 +294,17 @@ void Animation::AttachBones() {
 	if (debug::ison(debug::LITTLE)) std::cout << std::endl;
 	time (&end);
 
+	logfile.close();
 	std::cout << "Simple and visible attachment matrices created in " << difftime(end,start) << "s" << std::endl;
 
-	if (debug::ison(debug::EVERYTHING)) {
-		std::cout << "num of triplets: " << simpleTripletList.size() << std::endl;
-		for (std::vector<Tr>::const_iterator it = simpleTripletList.begin(); it != simpleTripletList.end(); it++) {
-			if (it->row() >= numVert || it->col() >= SkeletonNode::getNumberOfNodes()) {
-				std::cerr << "issue with: " << it->row() << ", " << it->col() << std::endl;
-			}
-		}
-	}
+//	if (debug::ison(debug::EVERYTHING)) {
+//		std::cout << "num of triplets: " << simpleTripletList.size() << std::endl;
+//		for (std::vector<Tr>::const_iterator it = simpleTripletList.begin(); it != simpleTripletList.end(); it++) {
+//			if (it->row() >= numVert || it->col() >= SkeletonNode::getNumberOfNodes()) {
+//				std::cerr << "issue with: " << it->row() << ", " << it->col() << std::endl;
+//			}
+//		}
+//	}
 
 	simpleConMat.resize(numVert, SkeletonNode::getNumberOfNodes());
 	simpleConMat.reserve(simpleTripletList.size()*1.5);
@@ -283,6 +313,14 @@ void Animation::AttachBones() {
 	visConMat.resize(numVert, SkeletonNode::getNumberOfNodes());
 	visConMat.reserve(visibleTripletList.size()*1.5);
 	visConMat.setFromTriplets(visibleTripletList.begin(), visibleTripletList.end());
+
+	findFinalAttachmentWeights(&simpleConMat);
+}
+
+void Animation::findFinalAttachmentWeights(Eigen::SparseMatrix<double>* connMatrixToUse) {
+	// we do it for each column separately
+	attachWeight.resize(model->getNumVertices(), model->getNumVertices());
+	// FIXME finish
 }
 
 void Animation::updateMeshSelected() {

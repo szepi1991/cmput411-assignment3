@@ -23,14 +23,14 @@ public:
 	Attachment(SkeletonNode const& endJoint_, Point const& attachPoint_, float distance_);
 	virtual ~Attachment() {};
 
-	bool operator<(Attachment const& o) const {
-		return (distance < o.distance);
-	}
+	bool operator<(Attachment const& o) const;
 
 	SkeletonNode const& getEndJoint() const { return *endJoint; }
 	Point const& getAttachPoint() const { return attachPoint; }
 	float getDistance() const {return distance;}
-
+	friend std::ostream& operator<< (std::ostream &out, Attachment const& a);
 };
+
+std::ostream& operator<<(std::ostream& os, const Attachment& a); // TODO might cause issues later that it's not inline?
 
 #endif /* ATTACHMENT_H_ */

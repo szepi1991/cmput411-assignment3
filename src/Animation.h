@@ -23,6 +23,7 @@ class LineSegment;
 class Animation {
 public:
 	enum AttachMatrix {SIMPLE_M, VISIBLE_M};
+	static bool test59Vert;
 
 private:
 	static const float WIDTH = 5;
@@ -54,6 +55,7 @@ private:
 	Eigen::SparseMatrix<double> simpleConMat;
 	Eigen::SparseMatrix<double> visConMat;
 	Eigen::VectorXd importances;
+	Eigen::MatrixXd attachWeight;
 
 	// TODO testing
 	std::vector< std::vector<LineSegment> > intersectingAtt;
@@ -95,7 +97,7 @@ public:
 	void setModel(boost::shared_ptr<Mesh> const & m) {
 		model = m;
 		importances.resize(model->getNumVertices());
-		AttachBones();
+		attachBonesToMesh();
 	}
 	void printAttachedMatrix(std::ostream& out, AttachMatrix mType) const throw(WrongStateException);
 	void printImportances(std::ostream& out) const throw(WrongStateException);
@@ -133,7 +135,8 @@ public:
 	}
 
 private:
-	void AttachBones();
+	void attachBonesToMesh();
+	void findFinalAttachmentWeights(Eigen::SparseMatrix<double>* connMatrixToUse);
 	void updateMeshSelected();
 
 };

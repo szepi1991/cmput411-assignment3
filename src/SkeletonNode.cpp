@@ -15,6 +15,8 @@
 #include "SkeletonNode.h"
 #include "tools.h"
 
+#include "Animation.h" // TODO TESTing
+
 #include <cmath>
 
 /* Recursively creates the skeleton based on the info in descr.
@@ -41,6 +43,7 @@
 SkeletonNode::SkeletonNode(std::ifstream& descr) throw(ParseException) {
 
 	myNodeNum = nodeCounter++;
+
 	std::string token;
 	descr >> token;
 	if (token.compare("{") != 0) {
@@ -60,13 +63,7 @@ SkeletonNode::SkeletonNode(std::ifstream& descr) throw(ParseException) {
 	descr >> offs[0] >> offs[1] >> offs[2];
 	offset.reset(new Point(offs[0], offs[1], offs[2]));
 
-	// calculate projToBone here.
-	Eigen::Matrix3f b = Eigen::Matrix3f::Zero();
-	b(0,0) = offset->x();
-	b(1,0) = offset->y(),
-	b(2,0) = offset->z();
-	// so now it's like a column vector and 0s after it
-	projToBoneM = Eigen::Matrix3f::Identity() - (b * b.transpose()) * (1/ offset->getLengthSqr());
+	calcProjMatrix();
 
 	descr >> token;
 	confirmParse(token, "CHANNELS");
@@ -130,6 +127,19 @@ SkeletonNode::SkeletonNode(boost::shared_ptr<Point> const & offsets) {
 		std::cout << "Created " << getDescr() << std::endl;
 	offset = offsets;
 	channelNum = 0;
+	calcProjMatrix();
+}
+
+void SkeletonNode::calcProjMatrix() {
+	// calculate projToBone here.
+	Eigen::Matrix3f b = Eigen::Matrix3f::Zero();
+	b(0,0) = offset->x();
+	b(1,0) = offset->y(),
+	b(2,0) = offset->z();
+	// so now it's like a column vector and 0s after it
+	if (offset->getLengthSqr() > EPS) {
+		projToBoneM = Eigen::Matrix3f::Identity() - (b * b.transpose()) * (1/ offset->getLengthSqr());
+	}
 }
 
 std::string SkeletonNode::getDescr() const {
@@ -333,6 +343,10 @@ void SkeletonNode::getClosestBones(Point p, std::set<Attachment>& bones) const {
 	for (std::vector<SkeletonNode>::const_iterator it = children.begin();
 														it != children.end(); ++it) {
 
+//		if (it->myNodeNum == 30) {
+//			std::cout << "Here's the culprit" << std::endl;
+//		}
+
 		boost::shared_ptr<Point> bone = it->offset;
 		Point closestPoint;
 		float pb = p.dot(*bone);
@@ -341,7 +355,7 @@ void SkeletonNode::getClosestBones(Point p, std::set<Attachment>& bones) const {
 		// if we only want to consider visible connections, need to test whether
 		// shortest line connecting bone to vertex crosses any faces. (see assumptions)
 
-		if (pb <= 0) {
+		if (pb <= 0) { // takes care of bonelength = 0 case
 			// connection is from upperjoint to p
 			closestPoint = worldOffset;
 			dist = p.getLength();
@@ -353,7 +367,7 @@ void SkeletonNode::getClosestBones(Point p, std::set<Attachment>& bones) const {
 		}
 		else {
 			Eigen::Vector3f v(p.x(),p.y(),p.z());
-			Eigen::Vector3f delta = (it->projToBoneM)*v; // vector from attachement point to p
+			Eigen::Vector3f delta = (it->projToBoneM)*v; // vector from attachment point to p
 
 			// connection is from projmatrix*p=delta (have to put it in world coords!) to p
 			closestPoint = p-Point(delta)+worldOffset;

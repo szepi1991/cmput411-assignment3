@@ -156,6 +156,9 @@ public:
 	unsigned static getNumberOfNodes() {return nodeCounter;}
 
 	MAKE_CLONEABLE(SkeletonNode);
+
+private:
+	void calcProjMatrix();
 };
 
 #endif /* SKELETONNODE_H_ */
