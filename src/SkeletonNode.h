@@ -30,7 +30,7 @@ private:
 	float xPos, yPos, zPos;
 	float modelTrans[16]; // all transformations of model -- in matrix format
 	Quaternion rotations;
-
+	Eigen::Matrix4f modelTM;
 
 public:
 
@@ -53,6 +53,7 @@ public:
 
 	void genMatrix();
 	void applyTransformation() const;
+	Eigen::Matrix4f const& getRotMatrix() const { return modelTM; }
 	void printFrame(std::ostream& out) const {
 		// using assumption here
 		if (channels == 6) {
@@ -156,6 +157,8 @@ public:
 	unsigned static getNumberOfNodes() {return nodeCounter;}
 
 	MAKE_CLONEABLE(SkeletonNode);
+
+//	void getBoneRots(std::vector< Eigen::Matrix4f >& boneRots, unsigned frame) const; // fills up boneRots in right order
 
 private:
 	void calcProjMatrix();

@@ -31,7 +31,8 @@ private:
 public:
 	Point (float x, float y, float z) : mx(x), my(y), mz(z) {};
 	Point (Point const& o) : mx(o.mx), my(o.my), mz(o.mz) {};
-	Point (Eigen::Vector3f const & p) : mx(p(0,0)), my(p(1,0)), mz(p(2,0)) {};
+	Point (Eigen::Vector3f const & p) : mx(p(0)), my(p(1)), mz(p(2)) {};
+//	Point (Eigen::Vector4f const & p) : mx(p(0)), my(p(1)), mz(p(2)) {};
 	// makes 0 point
 	Point () : mx(0), my(0), mz(0) {};
 	float x() const {return mx;}

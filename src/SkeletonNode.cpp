@@ -391,6 +391,23 @@ void SkeletonNode::getClosestBones(Point p, std::set<Attachment>& bones) const {
 
 }
 
+//// fills up boneRots in right order (M^-1 * R * M)
+//// where M transforms world coordinates to joing coordinates
+//// R is the rotation corresponding to frame f
+//void SkeletonNode::getBoneRots(std::vector< Eigen::Matrix4f >& boneRots, unsigned f) const {
+//	for (std::vector<SkeletonNode>::const_iterator it = children.begin();
+//											it != children.end(); ++it) {
+//		// TODO add child's bone rot
+//		Eigen::Matrix4f M = Eigen::Matrix4f::Identity();
+//		M.col(3) << offset->x(), offset->y(), offset->z();
+//		Eigen::Matrix4f R = motion[f].getRotMatrix();
+//		boneRots.push_back(M.inverse() * R * M);
+//		// call on child
+//		it->getBoneRots(boneRots, f);
+//	}
+//
+//	// FIXME implement
+//}
 
 
 // enlarges the axis-aligned box defined by the parameters so that each translated
@@ -432,7 +449,6 @@ void MotionFrame::interpolate(MotionFrame const & nextFrame, double fracPart, Mo
 
 // generates the transformation matrix for this frame
 void MotionFrame::genMatrix() {
-
 	// Quaternion stuff
 	Quaternion    rot(degToRad(zRot), 0, 0, 1);
 	rot *= Quaternion(degToRad(yRot), 0, 1, 0);
@@ -444,6 +460,9 @@ void MotionFrame::genMatrix() {
 		modelTrans[14] = zPos;
 	}
 	rotations = rot;
+
+	for (int i = 0; i < 16; ++i)
+		modelTM(i/4, i%4) = modelTrans[i]; // TODO or other way
 
 	if (debug::ison(debug::EVERYTHING)) print4x4Matrix(modelTrans);
 

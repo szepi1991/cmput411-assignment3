@@ -98,6 +98,7 @@ public:
 		model = m;
 		importances.resize(model->getNumVertices());
 		attachBonesToMesh();
+//		calculateMeshMotion();
 	}
 	void printAttachedMatrix(std::ostream& out, AttachMatrix mType) const throw(WrongStateException);
 	void printImportances(std::ostream& out) const throw(WrongStateException);
@@ -139,6 +140,7 @@ private:
 	void attachBonesToMesh();
 	void findFinalAttachmentWeights(Eigen::SparseMatrix<double>* connMatrixToUse);
 	void updateMeshSelected();
+//	void calculateMeshMotion();
 
 };
 

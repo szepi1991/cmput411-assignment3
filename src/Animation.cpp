@@ -211,7 +211,7 @@ void Animation::attachBonesToMesh() {
 
 	time (&start);
 	while (vertex = model->getOrigVertex(vNum), vertex != NULL
-//			&& vNum < 10 // FIXME test
+//			&& vNum < 10 // TODO test
 										) {
 		if (debug::ison(debug::LITTLE)) {
 			std::cout << vNum << " ";
@@ -333,12 +333,47 @@ void Animation::findFinalAttachmentWeights(Eigen::SparseMatrix<double>* connMatr
 
 	// check correctness
 	Eigen::MatrixXd res = attachWeight * Eigen::VectorXd::Ones(size);
-	std::cout << "These all should be zero in the next line:" << std::endl << "\t";
+	std::cout << "These all should be ones in the next line:" << std::endl << "\t";
 	for (int i = 0; i < size; ++i) {
 		std::cout << " " << res(i);
 	}
 	std::cout << std::endl;
 }
+
+//void Animation::calculateMeshMotion() {
+//	std::cout << "Pregenerating animation mesh points..";
+//	const std::vector<Point> oPoints = model->getOrigVertices();
+//	const std::vector<Point> oNorms = model->getOrigNormals();
+//
+//	for (unsigned i = 0; i < frameNum; ++i) {
+//		// calculate for each point its position in frame i
+//		std::vector<Point> nPoints;
+//		std::vector<Point> nNorms;
+//
+//		std::vector< Eigen::Matrix4f > boneRots;
+//		roots[0].getBoneRots(boneRots, i); // fills up boneRots in right order
+//
+//		for (std::vector<Point>::const_iterator it = oPoints.begin();
+//										it != oPoints.end(); ++it) {
+//			Point newP(0,0,0);
+//			for (unsigned j = 0; j < boneRots.size(); ++j) {
+//				Eigen::Vector4f pp = attachWeight(i,j) * boneRots[j] * getMatrixFormPoint(*it);
+//				newP += Point(pp(0), pp(1), pp(2));
+//			}
+//			nPoints.push_back(newP);
+//		}
+//
+//		for (std::vector<Point>::const_iterator it = nNorms.begin();
+//										it != nNorms.end(); ++it) {
+//			nNorms.push_back(*it); // FIXME temporary
+//		}
+//
+//		model->addFrame(nPoints, nNorms);
+//	}
+//
+//	std::cout << "Done." << std::endl;
+//}
+
 
 void Animation::updateMeshSelected() {
 	if (model) {
