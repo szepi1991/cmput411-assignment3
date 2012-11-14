@@ -23,6 +23,9 @@ void Mesh::loadModel(char* modelFile) throw (ParseException) {
 	// each vertex is consecutive 3 coord
 	std::vector<float> vertexCoords; // translated and scaled
 
+	std::vector<Point> vertices;
+	std::vector<Point> normals;
+
 	if (debug::ison(debug::LITTLE)) std::cout << "Loading " << modelFile << std::endl;
 	std::string line, lineType;
 	unsigned int vertex, normal;
@@ -106,6 +109,10 @@ void Mesh::loadModel(char* modelFile) throw (ParseException) {
 		throw ParseException("", "__ Unable to open the specified .obj file __");
 	}
 
+	// actually save it
+	verticesList.push_back(vertices);
+	normalsList.push_back(normals);
+
 	typedef Eigen::Triplet<double> Tr;
 	std::vector<Tr> adjTripletList;
 	adjTripletList.reserve(getNumVertices()*4);
@@ -134,6 +141,7 @@ void Mesh::loadModel(char* modelFile) throw (ParseException) {
 	adjacencyMatrix.setFromTriplets(adjTripletList.begin(), adjTripletList.end());
 
 	findLaplacian();
+
 }
 
 void Mesh::findLaplacian() {
@@ -198,13 +206,13 @@ void Mesh::printLaplacian(std::ostream& out) const {
 	}
 }
 
-void Mesh::printMesh(std::ostream& out) const {
+void Mesh::printOrigMesh(std::ostream& out) const {
 	out << std::fixed;
 	out.precision(6);
-	for (std::vector<Point>::const_iterator it = vertices.begin(); it != vertices.end(); ++it) {
+	for (std::vector<Point>::const_iterator it = verticesList[0].begin(); it != verticesList[0].end(); ++it) {
 		out << "v " << it->x() << " " << it->y() << " " << it->z() << std::endl;
 	}
-	for (std::vector<Point>::const_iterator it = normals.begin(); it != normals.end(); ++it) {
+	for (std::vector<Point>::const_iterator it = normalsList[0].begin(); it != normalsList[0].end(); ++it) {
 		out << "v " << it->x() << " " << it->y() << " " << it->z() << std::endl;
 	}
 
@@ -232,13 +240,13 @@ bool Mesh::intersects(LineSegment const & l) {
 }
 
 
-void Mesh::display() const {
+void Mesh::display(unsigned frame) const { // note default 0
 	// TODO optimize the selected stuff! maybe boost unordered_set
 	for (std::vector<Face>::const_iterator it = faces.begin(); it != faces.end(); ++it) {
 		glBegin(GL_TRIANGLES);
 			for (unsigned vn = 0; vn < 3; ++vn) { // each face is a triangle
-				Point n = normals[(*it)[vn].second];
-				Point v = vertices[(*it)[vn].first];
+				Point n = normalsList[frame][(*it)[vn].second];
+				Point v = verticesList[frame][(*it)[vn].first];
 				if (selected->find( (*it)[vn].first ) != selected->end() ) {
 					glColor4f(1.0, 0.0, 0.0, 0.5); // red
 				} else {
@@ -252,8 +260,8 @@ void Mesh::display() const {
 			// now also draw the normals..
 			glColor3f(0.0, 0.0, 1.0);
 			for (unsigned vn = 0; vn < 3; ++vn) { // each face is a triangle
-				Point n = normals[(*it)[vn].second];
-				Point v = vertices[(*it)[vn].first];
+				Point n = normalsList[frame][(*it)[vn].second];
+				Point v = verticesList[frame][(*it)[vn].first];
 				glBegin(GL_LINES);
 					glVertex3f(v.x(), v.y(), v.z());
 					glVertex3f(v.x()+n.x(), v.y()+n.y(), v.z()+n.z());

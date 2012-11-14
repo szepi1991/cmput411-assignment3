@@ -196,7 +196,7 @@ void Animation::attachBonesToMesh() {
 	std::vector<Tr> simpleTripletList;
 	std::vector<Tr> visibleTripletList;
 	unsigned numVert = model->getNumVertices();
-	simpleTripletList.reserve(numVert*2);
+	simpleTripletList.reserve(numVert*2); // TODO try changing this and see what happens
 	visibleTripletList.reserve(numVert*2);
 
 	if (debug::ison(debug::LITTLE)) std::cout << "verts=" << numVert << ": ";
@@ -210,7 +210,7 @@ void Animation::attachBonesToMesh() {
 	std::ofstream sdistsfile("Sdists.log");
 
 	time (&start);
-	while (vertex = model->getVertex(vNum), vertex != NULL
+	while (vertex = model->getOrigVertex(vNum), vertex != NULL
 //			&& vNum < 10 // FIXME test
 										) {
 		if (debug::ison(debug::LITTLE)) {
@@ -360,7 +360,7 @@ void Animation::updateMeshSelected() {
 			std::cout << sel->size() << " vertices attached to current bone. These are" << std::endl;
 			for (std::set<unsigned>::const_iterator it = sel->begin();
 													it != sel->end(); ++it) {
-				std::cout << "\t" << *it << ": " << *(model->getVertex(*it)) << std::endl;
+				std::cout << "\t" << *it << ": " << *(model->getOrigVertex(*it)) << std::endl;
 			}
 		}
 		model->setSelectedVerts(sel);
@@ -422,8 +422,9 @@ void Animation::display(bool showSelBone) {
 	timeOfPreviousCall = curTime;
 
 //	if (MYINFO) std::cout << "Drawing Frame " << curFrameFrac << std::endl;
-	for (unsigned i = 0; i < roots.size(); ++i)
+	for (unsigned i = 0; i < roots.size(); ++i) {
 		roots[i].display(curFrameFrac, selectedBone);
+	}
 
 	if (debug::ison(debug::EVERYTHING)) {
 		float currentColor[4];

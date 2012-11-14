@@ -247,7 +247,7 @@ void keyInput(unsigned char key, int x, int y) {
 		outfile1.close();
 
 		ofstream outfile2("meshout.obj");
-		model->printMesh(outfile2);
+		model->printOrigMesh(outfile2);
 		outfile2.close();
 
 		ofstream outfile3("S.out");

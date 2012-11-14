@@ -21,12 +21,12 @@ typedef std::vector< std::pair< unsigned, unsigned> > Face;
 
 class Mesh {
 private:
-	std::vector<Point> vertices;
-	std::vector<Point> normals;
+	std::vector< std::vector<Point> > verticesList; // as read from the file
+	std::vector< std::vector<Point> > normalsList; // as read from the file
 	std::vector<Face> faces;
 
 	// for speeding things up
-	std::vector<Triangle> facesTr;
+	std::vector<Triangle> facesTr; // the original ones!
 
 	Eigen::SparseMatrix<double> adjacencyMatrix;
 	Eigen::SparseMatrix<double> laplacian;
@@ -57,13 +57,13 @@ public:
 		selected.reset( new std::set<unsigned> );
 	}
 	void loadModel(char* inputfile) throw (ParseException);
-	void display() const;
-	void printMesh(std::ostream& out) const;
+	void display(unsigned = 0) const;
+	void printOrigMesh(std::ostream& out) const;
 	void printAdjMatrix(std::ostream& out) const;
 	void printLaplacian(std::ostream& out) const;
 	Eigen::SparseMatrix<double> const& getLaplacian() const { return laplacian; }
 	virtual ~Mesh();
-	unsigned getNumVertices() const { return vertices.size(); }
+	unsigned getNumVertices() const { return verticesList[0].size(); }
 	void setSelectedVerts(boost::shared_ptr< std::set<unsigned> > const& sel) {
 		selected = sel;
 	}
@@ -71,9 +71,16 @@ public:
 	bool intersects(LineSegment const & l);
 
 	// return NULL if bad index. TODO note that we should use shared_ptr instead..
-	const Point * getVertex(unsigned ind) const {
-		if (ind < 0 || ind >= vertices.size()) return NULL;
-		return &vertices[ind];
+	const Point * getOrigVertex(unsigned ind) const {
+		if (ind < 0 || ind >= verticesList[0].size()) return NULL;
+		return &verticesList[0][ind];
+	}
+
+	std::vector<Point> const& getOrigVertices() { return verticesList[0]; }
+	std::vector<Point> const& getOrigNormals() { return normalsList[0]; }
+	void addFrame(std::vector<Point> const& verts, std::vector<Point> const& normals) {
+		verticesList.push_back(verts);
+		normalsList.push_back(normals);
 	}
 };
 
