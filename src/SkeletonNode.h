@@ -56,7 +56,7 @@ public:
 	}
 
 	void genMatrix();
-	Eigen::Matrix4f const& getMatrix() {return transf;}
+	Eigen::Matrix4f const& getMatrix() const { return transf; }
 //	Eigen::Map<const Eigen::Matrix4f> const& getMatrix() {return transf;}
 	void applyTransformation() const;
 	void printFrame(std::ostream& out) const {
@@ -112,7 +112,7 @@ public:
 
 	void setWorldOffsetRec(Point const & parentOffset) {
 		worldOffset = parentOffset + *offset;
-		worldOffsetE = getVectorForm(worldOffset);
+		worldOffsetE = getVectorFormDirection(worldOffset);
 		for (std::vector<SkeletonNode>::iterator it = children.begin();
 												it != children.end(); ++it) {
 			it->setWorldOffsetRec(worldOffset);
@@ -160,7 +160,7 @@ public:
 	}
 	void offsetBounds(float * mins, float * maxs) const;
 
-	void getLocationRec(Eigen::Vector4d & p, unsigned boneNum, unsigned frameNum) const;
+	void getLocationRec(Eigen::Vector4f & p, int boneNum, unsigned frameNum) const;
 
 	// node this only works as expected if we never delete a node!!
 	unsigned static getNumberOfNodes() {return nodeCounter;}

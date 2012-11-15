@@ -26,8 +26,6 @@
 #include <limits>
 #include <ctime>
 
-bool Animation::test59Vert = false;
-
 Animation::Animation(char *filename) throw(ParseException) :
 					figureSize(0), selectedBone(0), displayOnMeshType(SIMPLE_M) {
 
@@ -199,6 +197,12 @@ void Animation::attachBonesToMesh() {
 	simpleTripletList.reserve(numVert*2); // TODO try changing this and see what happens
 	visibleTripletList.reserve(numVert*2);
 
+	simpleConMat.resize(numVert, SkeletonNode::getNumberOfNodes());
+	simpleConMat.reserve(simpleTripletList.size()*1.5);
+	visConMat.resize(numVert, SkeletonNode::getNumberOfNodes());
+	visConMat.reserve(visibleTripletList.size()*1.5);
+
+
 	if (debug::ison(debug::LITTLE)) std::cout << "verts=" << numVert << ": ";
 
 	// first version: for each vertex find the closest bone
@@ -210,6 +214,9 @@ void Animation::attachBonesToMesh() {
 	std::ofstream sdistsfile("Sdists.log");
 
 	time (&start);
+	std::set<Attachment> attachments; // could reserve size too..
+	std::vector<SkeletonNode> closests;
+	std::vector<SkeletonNode> closestsVis;
 	while (vertex = model->getOrigVertex(vNum), vertex != NULL
 //			&& vNum < 10 // TODO test
 										) {
@@ -217,10 +224,8 @@ void Animation::attachBonesToMesh() {
 			std::cout << vNum << " ";
 			std::flush(std::cout);
 		}
-		if (vNum == 59) test59Vert = true;
-		else test59Vert = false;
 
-		std::set<Attachment> attachments;
+		attachments.clear();
 		if (debug::ison(debug::EVERYTHING))
 			std::cout << "+ Studying point " << vNum << " that is " << *vertex << std::endl;
 		roots[0].getClosestBones(Point(*vertex), attachments);
@@ -238,7 +243,7 @@ void Animation::attachBonesToMesh() {
 		}
 
 		// now find the list of closest attachments (attachments is ordered so easy)
-		std::vector<SkeletonNode> closests;
+		closests.clear();
 		float minSimpleDist = attachments.begin()->getDistance(); // there's always at least one
 		for (std::set<Attachment>::const_iterator setIt = attachments.begin();
 				setIt != attachments.end(); ++setIt) {
@@ -253,7 +258,7 @@ void Animation::attachBonesToMesh() {
 		sdistsfile << vNum << " " << minSimpleDist << std::endl;
 
 		// now find the list of closest VISIBLE attachments (attachments is ordered so easy)
-		std::vector<SkeletonNode> closestsVis;
+		closestsVis.clear();
 		float minVisDist = std::numeric_limits<float>::max()-2*EPS; // not smaller than any element
 		bool distSet = false;
 		for (std::set<Attachment>::const_iterator setIt = attachments.begin();
@@ -301,12 +306,7 @@ void Animation::attachBonesToMesh() {
 //		}
 //	}
 
-	simpleConMat.resize(numVert, SkeletonNode::getNumberOfNodes());
-	simpleConMat.reserve(simpleTripletList.size()*1.5);
 	simpleConMat.setFromTriplets(simpleTripletList.begin(), simpleTripletList.end());
-
-	visConMat.resize(numVert, SkeletonNode::getNumberOfNodes());
-	visConMat.reserve(visibleTripletList.size()*1.5);
 	visConMat.setFromTriplets(visibleTripletList.begin(), visibleTripletList.end());
 
 	findFinalAttachmentWeights(&simpleConMat);
@@ -423,7 +423,7 @@ void Animation::precalculateMesh() {
 	}
 
 	std::vector<Point> newNormals; // fake one
-	Eigen::Vector4d oldLoc;
+	Eigen::Vector4f oldLoc;
 
 	std::ofstream precalcMeshFile("meshMotion.out");
 	// for each frame
@@ -449,8 +449,8 @@ void Animation::precalculateMesh() {
 			Point newPoint(0,0,0);
 			for (unsigned cBone = 0; cBone < bones; ++cBone) {
 				if (attachWeight(vNum, cBone) > EPS) {
-					oldLoc = getVectorForm(oPoints[vNum]);
-					roots[0].getLocationRec(oldLoc, cBone, f);
+					oldLoc = getVectorFormPoint(oPoints[vNum]);
+					roots[0].getLocationRec(oldLoc, (int) cBone, f);
 					newPoint += Point(oldLoc(0), oldLoc(1), oldLoc(2)) * attachWeight(vNum, cBone);
 				}
 			}

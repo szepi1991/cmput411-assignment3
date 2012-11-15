@@ -395,23 +395,27 @@ void SkeletonNode::getClosestBones(Point p, std::set<Attachment>& bones) const {
 // Take p in parent coordinates (= world for root) and change it to
 // where it would be (in parent coordinates again) if it was attached
 // to bone boneNum in frame frameNum
-void SkeletonNode::getLocationRec(Eigen::Vector4d & p, unsigned boneNum, unsigned frameNum) const {
+void SkeletonNode::getLocationRec(Eigen::Vector4f & p, int boneNum, unsigned frameNum) const {
+	if (children.size() == 0) return; // TODO I'm not certain..
+//	std::cout << "In " << getUpperBoneNum() << "\tneed " << boneNum << std::endl;
 	// first call recursively for appropriate child (since we did dfs bone nums have bracket property)
-	if (boneNum == getUpperBoneNum()) { // base case
-		p -= worldOffsetE;
-//		const Eigen::Map<const Eigen::Matrix4f> t = motion[frameNum].getMatrix();
-//		p *= motion[frameNum].getMatrix();
-		p += worldOffsetE;
-		return;
-	}
-	for (std::vector<SkeletonNode>::const_reverse_iterator it = children.rbegin();
-											it != children.rend(); ++it) {
-		if (boneNum >= it->getUpperBoneNum()) {
-			it->getLocationRec(p, boneNum, frameNum);
-			// FIXME calculate
-			break;
+	if (boneNum != getUpperBoneNum()) { // NOT base case
+		for (std::vector<SkeletonNode>::const_reverse_iterator it = children.rbegin();
+												it != children.rend(); ++it) {
+			if (boneNum >= it->getUpperBoneNum()) {
+				it->getLocationRec(p, boneNum, frameNum);
+				break;
+			}
 		}
 	}
+
+	p -= worldOffsetE;
+//	const Eigen::Map<const Eigen::Matrix4f> t = motion[frameNum].getMatrix();
+//	const Eigen::Matrix4f t = motion[frameNum].getMatrix();
+//	Eigen::Vector4f r = t*p;
+	p = motion[frameNum].getMatrix() * p; // TODO ok??
+	p += worldOffsetE;
+
 //	// fake implementation
 //	while (frameNum-- > 0) {p(0) -= 0.1;}
 };

@@ -5,7 +5,7 @@
  *      Author: david
  */
 
-#ifndef SPARESMATRIXHELP_H_
+#ifndef SPARSEMATRIXHELP_H_
 #define SPARSEMATRIXHELP_H_
 
 #include <Eigen/Sparse>
@@ -62,10 +62,15 @@ inline Eigen::SparseMatrix<double> delta(Eigen::VectorXd const& vec ) {
 	return delta;
 }
 
-inline Eigen::Vector4d getVectorForm(Point const& p) {
-	Eigen::Vector4d v;
+inline Eigen::Vector4f getVectorFormPoint(Point const& p) {
+	Eigen::Vector4f v;
 	v << p.x(), p.y(), p.z(), 1;
 	return v;
 }
+inline Eigen::Vector4f getVectorFormDirection(Point const& p) {
+	Eigen::Vector4f v;
+	v << p.x(), p.y(), p.z(), 0;
+	return v;
+}
 
-#endif /* SPARESMATRIXHELP_H_ */
+#endif /* SPARSEMATRIXHELP_H_ */

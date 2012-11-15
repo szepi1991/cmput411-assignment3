@@ -23,7 +23,6 @@ class LineSegment;
 class Animation {
 public:
 	enum AttachMatrix {SIMPLE_M, VISIBLE_M};
-	static bool test59Vert;
 
 private:
 	static const float WIDTH = 5;
@@ -96,8 +95,10 @@ public:
 
 	void setModel(boost::shared_ptr<Mesh> const & m) {
 		model = m;
-		importances.resize(model->getNumVertices());
-		attachBonesToMesh();
+		importances.resize(model->getNumVertices()); // this does not look like a good place for this..
+		attachBonesToMesh(); // FIXME testing
+//		attachWeight.resize(model->getNumVertices(), SkeletonNode::getNumberOfNodes());
+//		attachWeight = Eigen::MatrixXd::Identity(model->getNumVertices(), SkeletonNode::getNumberOfNodes());
 		precalculateMesh();
 	}
 	void printAttachedMatrix(std::ostream& out, AttachMatrix mType) const throw(WrongStateException);
