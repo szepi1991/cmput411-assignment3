@@ -476,6 +476,15 @@ void Animation::precalculateMesh() {
 //			std::cout << " " << vNum;
 //			flush(std::cout);
 			Point newPoint(0,0,0);
+
+//			// just the closest one
+//			int bone;
+//			attachWeight.row(vNum).maxCoeff(&bone);
+//			oldLoc = getVectorFormPoint(oPoints[vNum]);
+//			roots[0].getLocationRec(oldLoc, (int) bone, f);
+//			newPoint = Point(oldLoc(0), oldLoc(1), oldLoc(2));
+
+			// combination of attached matrices
 			for (unsigned cBone = 0; cBone < bones; ++cBone) {
 				if (attachWeight(vNum, cBone) > EPS) {
 					oldLoc = getVectorFormPoint(oPoints[vNum]);
@@ -483,6 +492,7 @@ void Animation::precalculateMesh() {
 					newPoint += Point(oldLoc(0), oldLoc(1), oldLoc(2)) * attachWeight(vNum, cBone);
 				}
 			}
+
 			newPoints.push_back(newPoint);
 			precalcMeshFile << "  " << newPoint;
 		}

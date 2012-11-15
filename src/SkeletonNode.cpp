@@ -398,6 +398,7 @@ void SkeletonNode::getClosestBones(Point p, std::set<Attachment>& bones) const {
 void SkeletonNode::getLocationRec(Eigen::Vector4f & p, int boneNum, unsigned frameNum) const {
 	if (children.size() == 0) return; // TODO I'm not certain..
 //	std::cout << "In " << getUpperBoneNum() << "\tneed " << boneNum << std::endl;
+
 	// first call recursively for appropriate child (since we did dfs bone nums have bracket property)
 	if (boneNum != getUpperBoneNum()) { // NOT base case
 		for (std::vector<SkeletonNode>::const_reverse_iterator it = children.rbegin();
@@ -419,7 +420,6 @@ void SkeletonNode::getLocationRec(Eigen::Vector4f & p, int boneNum, unsigned fra
 //	// fake implementation
 //	while (frameNum-- > 0) {p(0) -= 0.1;}
 };
-
 
 
 // enlarges the axis-aligned box defined by the parameters so that each translated
@@ -476,7 +476,7 @@ void MotionFrame::genMatrix() {
 
 	// generate the Eigen matrix
 	for (unsigned i = 0; i < 16; ++i)
-		transf(i/4, i%4) = modelTrans[i];
+		transf(i%4, i/4) = modelTrans[i];
 
 	if (debug::ison(debug::EVERYTHING)) print4x4Matrix(modelTrans);
 
