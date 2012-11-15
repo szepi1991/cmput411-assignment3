@@ -152,6 +152,11 @@ public:
 	}
 	void offsetBounds(float * mins, float * maxs) const;
 
+	// Take p in parent coordinates (= world for root) and change it to
+	// where it would be (in parent coordinates again) if it was attached
+	// to bone boneNum in frame frameNum
+	void getLocation(Eigen::Vector4d & p, unsigned boneNum, unsigned frameNum) const {}; // FIXME implement
+
 	// node this only works as expected if we never delete a node!!
 	unsigned static getNumberOfNodes() {return nodeCounter;}
 

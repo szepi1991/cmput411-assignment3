@@ -22,7 +22,7 @@
 //#define SECtoMSEC 10000.0f
 
 #define PI 3.14159265359
-#define EPS 0.0000001
+#define EPS 0.00001
 
 #define degToRad(x) (x*PI/180)
 #define radToDeg(x) (x*180/PI)

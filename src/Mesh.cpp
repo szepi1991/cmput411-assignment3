@@ -260,7 +260,7 @@ void Mesh::display(int frame) const { // note default -1
 		glBegin(GL_TRIANGLES);
 			for (unsigned vn = 0; vn < 3; ++vn) { // each face is a triangle
 				Point n = normalsList[frame][(*it)[vn].second];
-				Point v = verticesList[frame][(*it)[vn].first];
+				Point v = verticesList[0][(*it)[vn].first]; // FIXME later make this based on frame too
 				if (selected->find( (*it)[vn].first ) != selected->end() ) {
 					glColor4f(1.0, 0.0, 0.0, 0.5); // red
 				} else {

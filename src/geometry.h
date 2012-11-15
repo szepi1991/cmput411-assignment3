@@ -41,9 +41,11 @@ public:
 
 	Point & operator*=(float a) { mx*=a; my*=a; mz*=a; return *this; }
 	const Point operator*(float a) const { return Point(*this) *= a; }
+	Point & operator*=(double a) { mx*=a; my*=a; mz*=a; return *this; }
+	const Point operator*(double a) const { return Point(*this) *= a; }
 	Point & operator+=(Point const& o) { mx += o.mx; my += o.my; mz += o.mz; return *this; }
 	const Point operator+(Point const& o) const { return Point(*this) += o; }
-	Point & operator-=(Point const& o) { return (*this)+=o*(-1); }
+	Point & operator-=(Point const& o) { return (*this)+=o*(-1.0f); }
 	const Point operator-(Point const& o) const { return Point(*this) -= o; }
 
 	float dot(Point const& o) const { return (mx*o.mx + my*o.my + mz*o.mz); }
@@ -190,7 +192,7 @@ inline bool intersectLineSegWithTriangle(LineSegment const & l, Triangle const &
 	// 0 <= b, g. b+g <= 1. 0 < l < 1
 	return (interSectMatr::x(0, 0) >= 0 && interSectMatr::x(1,0) >= 0 &&
 			interSectMatr::x(0,0) + interSectMatr::x(1,0) <= 1 &&
-			0.01 < interSectMatr::x(2,0) && interSectMatr::x(2,0) < 0.99 ); // TODO or use 0?
+			0.01 < interSectMatr::x(2,0) && interSectMatr::x(2,0) < 0.99 ); // TODO use 0.0001
 }
 
 

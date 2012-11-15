@@ -315,8 +315,9 @@ void Animation::attachBonesToMesh() {
 void Animation::findFinalAttachmentWeights(Eigen::SparseMatrix<double>* connMatrixToUse) {
 	// we do it for each column separately
 	std::cout << "Calculating W.." << std::endl;
-	int size = model->getNumVertices();
-	attachWeight.resize(size, size);
+	int verts = model->getNumVertices();
+	int bones = SkeletonNode::getNumberOfNodes();
+	attachWeight.resize(verts, bones);
 
 	typedef Eigen::SparseMatrix<double> SpMat;
 	SpMat Dh = delta(importances);
@@ -332,9 +333,9 @@ void Animation::findFinalAttachmentWeights(Eigen::SparseMatrix<double>* connMatr
 	std::cout << "Done." << std::endl;
 
 	// check correctness
-	Eigen::MatrixXd res = attachWeight * Eigen::VectorXd::Ones(size);
+	Eigen::MatrixXd res = attachWeight * Eigen::VectorXd::Ones(bones);
 	std::cout << "These all should be ones in the next line:" << std::endl << "\t";
-	for (int i = 0; i < size; ++i) {
+	for (int i = 0; i < verts; ++i) {
 		std::cout << " " << res(i);
 	}
 	std::cout << std::endl;
@@ -410,6 +411,35 @@ void Animation::printImportances(std::ostream& out) const throw(WrongStateExcept
 
 void Animation::precalculateMesh() {
 	std::cout << "Pre-calculating mesh animation..";
+	flush(std::cout);
+
+	const std::vector<Point> oPoints = model->getOrigVertices();
+	const unsigned bones = attachWeight.cols();
+	if (bones != SkeletonNode::getNumberOfNodes()) {
+		std::cout << "bones vs nodeNum = " << bones << " vs " << SkeletonNode::getNumberOfNodes() << std::endl;
+		assert(false);
+	}
+
+	std::vector<Point> newNormals; // fake one
+
+	// for each frame
+	for (unsigned f = 0; f < frameNum; ++f) {
+		//for each original point (// FIXME later handle normals too)
+		std::vector<Point> newPoints;
+		for (unsigned vNum = 0; vNum < oPoints.size(); ++vNum) {
+			Point newPoint(0,0,0);
+			for (unsigned cBone = 0; cBone < bones; ++cBone) {
+				if (attachWeight(vNum, cBone) > EPS) {
+					Eigen::Vector4d oldLoc = getVectorForm(oPoints[vNum]);
+					roots[0].getLocation(oldLoc, cBone, f);
+					newPoint += Point(oldLoc(0), oldLoc(1), oldLoc(2)) * attachWeight(vNum, cBone);
+				}
+			}
+			newPoints.push_back(newPoint);
+		}
+		model->addFrame(newPoints, newNormals);
+	}
+
 	std::cout << "Done" << std::endl;
 }
 

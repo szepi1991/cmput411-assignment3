@@ -9,6 +9,7 @@
 #define SPARSEMATRIXHELP_H_
 
 #include <Eigen/Sparse>
+#include "geometry.h"
 
 // prints "rowNum indOfNonzero indOfNonzero etc"
 template <class T>
@@ -61,5 +62,9 @@ inline Eigen::SparseMatrix<double> delta(Eigen::VectorXd const& vec ) {
 	return delta;
 }
 
+inline Eigen::Vector4d getVectorForm(Point const& p) {
+	Eigen::Vector4d v; // FIXME implement
+	return v;
+}
 
 #endif /* SPARESMATRIXHELP_H_ */
