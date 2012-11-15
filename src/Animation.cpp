@@ -450,7 +450,7 @@ void Animation::precalculateMesh() {
 			for (unsigned cBone = 0; cBone < bones; ++cBone) {
 				if (attachWeight(vNum, cBone) > EPS) {
 					oldLoc = getVectorForm(oPoints[vNum]);
-					roots[0].getLocation(oldLoc, cBone, f);
+					roots[0].getLocationRec(oldLoc, cBone, f);
 					newPoint += Point(oldLoc(0), oldLoc(1), oldLoc(2)) * attachWeight(vNum, cBone);
 				}
 			}

@@ -13,6 +13,7 @@
 #include "geometry.h"
 #include "Mesh.h"
 #include "Attachment.h"
+#include "sparseMatrixHelp.h"
 
 #include <string>
 #include <vector>
@@ -20,6 +21,7 @@
 #include <set>
 #include <boost/shared_ptr.hpp>
 #include <Eigen/Dense>
+//#include <Eigen/Map>
 
 class MotionFrame {
 	// these can't be const since they are put in a vector where the elements
@@ -29,6 +31,8 @@ private:
 	float zRot, yRot, xRot;
 	float xPos, yPos, zPos;
 	float modelTrans[16]; // all transformations of model -- in matrix format
+	Eigen::Matrix4f transf; // all transformations of model -- in matrix format
+//	Eigen::Map<const Eigen::Matrix4f> transf; // all transformations of model -- in matrix format
 	Quaternion rotations;
 
 
@@ -52,6 +56,8 @@ public:
 	}
 
 	void genMatrix();
+	Eigen::Matrix4f const& getMatrix() {return transf;}
+//	Eigen::Map<const Eigen::Matrix4f> const& getMatrix() {return transf;}
 	void applyTransformation() const;
 	void printFrame(std::ostream& out) const {
 		// using assumption here
@@ -83,6 +89,7 @@ private:
 	// where this node is located (with the offset!) in world coordinates.
 	// that is the location of the endpoint of the bone
 	Point worldOffset;
+	Eigen::Vector4f worldOffsetE;
 	unsigned channelNum;
 	std::vector<MotionFrame> motion;
 
@@ -105,6 +112,7 @@ public:
 
 	void setWorldOffsetRec(Point const & parentOffset) {
 		worldOffset = parentOffset + *offset;
+		worldOffsetE = getVectorForm(worldOffset);
 		for (std::vector<SkeletonNode>::iterator it = children.begin();
 												it != children.end(); ++it) {
 			it->setWorldOffsetRec(worldOffset);
@@ -152,13 +160,7 @@ public:
 	}
 	void offsetBounds(float * mins, float * maxs) const;
 
-	// Take p in parent coordinates (= world for root) and change it to
-	// where it would be (in parent coordinates again) if it was attached
-	// to bone boneNum in frame frameNum
-	void getLocation(Eigen::Vector4d & p, unsigned boneNum, unsigned frameNum) const {
-		// FIXME implement
-		while (frameNum-- > 0) {p(0) -= 0.1;} // TODO not sure if correct
-	};
+	void getLocationRec(Eigen::Vector4d & p, unsigned boneNum, unsigned frameNum) const;
 
 	// node this only works as expected if we never delete a node!!
 	unsigned static getNumberOfNodes() {return nodeCounter;}

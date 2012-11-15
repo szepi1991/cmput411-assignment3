@@ -392,6 +392,31 @@ void SkeletonNode::getClosestBones(Point p, std::set<Attachment>& bones) const {
 }
 
 
+// Take p in parent coordinates (= world for root) and change it to
+// where it would be (in parent coordinates again) if it was attached
+// to bone boneNum in frame frameNum
+void SkeletonNode::getLocationRec(Eigen::Vector4d & p, unsigned boneNum, unsigned frameNum) const {
+	// first call recursively for appropriate child (since we did dfs bone nums have bracket property)
+	if (boneNum == getUpperBoneNum()) { // base case
+		p -= worldOffsetE;
+//		const Eigen::Map<const Eigen::Matrix4f> t = motion[frameNum].getMatrix();
+//		p *= motion[frameNum].getMatrix();
+		p += worldOffsetE;
+		return;
+	}
+	for (std::vector<SkeletonNode>::const_reverse_iterator it = children.rbegin();
+											it != children.rend(); ++it) {
+		if (boneNum >= it->getUpperBoneNum()) {
+			it->getLocationRec(p, boneNum, frameNum);
+			// FIXME calculate
+			break;
+		}
+	}
+//	// fake implementation
+//	while (frameNum-- > 0) {p(0) -= 0.1;}
+};
+
+
 
 // enlarges the axis-aligned box defined by the parameters so that each translated
 // point fits into the box
@@ -444,6 +469,10 @@ void MotionFrame::genMatrix() {
 		modelTrans[14] = zPos;
 	}
 	rotations = rot;
+
+	// generate the Eigen matrix
+	for (unsigned i = 0; i < 16; ++i)
+		transf(i/4, i%4) = modelTrans[i];
 
 	if (debug::ison(debug::EVERYTHING)) print4x4Matrix(modelTrans);
 
