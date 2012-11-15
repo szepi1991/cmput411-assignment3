@@ -180,7 +180,6 @@ inline bool intersectLineSegWithTriangle(LineSegment const & l, Triangle const &
 			col1.my, col2.my, l.d.my,
 			col1.mz, col2.mz, l.d.mz;
 
-	// FIXME log input and output here to see if deterministic!!
 	interSectMatr::A.computeInverseWithCheck(interSectMatr::Ainv, interSectMatr::invertable);
 	if (!interSectMatr::invertable) return false;
 

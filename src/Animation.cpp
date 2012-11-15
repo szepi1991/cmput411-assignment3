@@ -211,9 +211,9 @@ void Animation::attachBonesToMesh() {
 
 	time (&start);
 	while (vertex = model->getOrigVertex(vNum), vertex != NULL
-//			&& vNum < 10 // FIXME test
+//			&& vNum < 10 // TODO test
 										) {
-		if (debug::ison(debug::LITTLE)) {
+		if (vNum % 100 == 0 && debug::ison(debug::LITTLE)) {
 			std::cout << vNum << " ";
 			std::flush(std::cout);
 		}
@@ -410,10 +410,12 @@ void Animation::printImportances(std::ostream& out) const throw(WrongStateExcept
 }
 
 void Animation::precalculateMesh() {
-	std::cout << "Pre-calculating mesh animation..";
+	std::cout << "Pre-calculating mesh animation.." << std::endl;
 	flush(std::cout);
 
 	const std::vector<Point> oPoints = model->getOrigVertices();
+	std::vector<Point> newPoints;
+	newPoints.reserve(oPoints.size());
 	const unsigned bones = attachWeight.cols();
 	if (bones != SkeletonNode::getNumberOfNodes()) {
 		std::cout << "bones vs nodeNum = " << bones << " vs " << SkeletonNode::getNumberOfNodes() << std::endl;
@@ -421,19 +423,33 @@ void Animation::precalculateMesh() {
 	}
 
 	std::vector<Point> newNormals; // fake one
+	Eigen::Vector4d oldLoc;
 
 	std::ofstream precalcMeshFile("meshMotion.out");
 	// for each frame
+	std::cout << "Frames=" << frameNum << ":";
 	for (unsigned f = 0; f < frameNum; ++f) {
+		if (f % 20 == 0) {
+			std::cout << " " << f; // << ":vertex[";
+			flush(std::cout);
+		}
+		// TODO just for speedup
+		if (f > 100) {
+			model->addFrame(oPoints, newNormals);
+			continue;
+		}
+
 		precalcMeshFile << "---- Frame " << f << ":";
 
 		//for each original point (// FIXME later handle normals too)
-		std::vector<Point> newPoints;
+		newPoints.clear();
 		for (unsigned vNum = 0; vNum < oPoints.size(); ++vNum) {
+//			std::cout << " " << vNum;
+//			flush(std::cout);
 			Point newPoint(0,0,0);
 			for (unsigned cBone = 0; cBone < bones; ++cBone) {
 				if (attachWeight(vNum, cBone) > EPS) {
-					Eigen::Vector4d oldLoc = getVectorForm(oPoints[vNum]);
+					oldLoc = getVectorForm(oPoints[vNum]);
 					roots[0].getLocation(oldLoc, cBone, f);
 					newPoint += Point(oldLoc(0), oldLoc(1), oldLoc(2)) * attachWeight(vNum, cBone);
 				}
@@ -441,9 +457,11 @@ void Animation::precalculateMesh() {
 			newPoints.push_back(newPoint);
 			precalcMeshFile << "  " << newPoint;
 		}
+//		std::cout << "]";
 		precalcMeshFile << std::endl;
 		model->addFrame(newPoints, newNormals);
 	}
+	std::cout << std::endl;
 	precalcMeshFile.close();
 
 	std::cout << "Done" << std::endl;
@@ -466,7 +484,7 @@ void Animation::display(bool showSelBone) {
 	if (debug::ison(debug::EVERYTHING)) std::cout << "Drawing Frame " << curFrameFrac << "->" << frame << std::endl;
 
 	// handles its own color and width etc
-	model->display(frame); // FIXME later this should be frame
+	model->display(frame);
 
 	glColor3f(1.0, 1.0, 0.1); // make it yellow and thick
     glLineWidth(3);
