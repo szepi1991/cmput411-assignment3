@@ -142,6 +142,7 @@ private:
 	void findFinalAttachmentWeights(Eigen::SparseMatrix<double>* connMatrixToUse);
 	void updateMeshSelected();
 	void precalculateMesh();
+	bool tryLoadingAttached();
 
 };
 

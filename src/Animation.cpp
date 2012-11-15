@@ -182,10 +182,39 @@ void Animation::outputBVH(std::ostream& out) {
 	}
 }
 
+// return true if succeeded
+bool Animation::tryLoadingAttached() {
+
+	std::ifstream myfile ("W.out");
+	if (!myfile.is_open()) return false;
+
+	unsigned verNum = 0;
+	unsigned totBones = SkeletonNode::getNumberOfNodes();
+	unsigned totVers = model->getNumVertices();
+	float data;
+	attachWeight.resize(totVers, totBones);
+//	while ( myfile.good() )
+	for (unsigned vn = 0; vn < totVers; ++vn)
+	{
+		myfile >> verNum;
+		assert(verNum == vn);
+		for (unsigned bn = 0; bn < totBones; ++bn) {
+			myfile >> data;
+			attachWeight(verNum, bn) = data;
+		}
+	}
+	myfile.close();
+
+	return true;
+}
+
 /** calculates an attachment to the bones of the specified model.
  * Note: here we assume there's one root only.
  */
 void Animation::attachBonesToMesh() {
+
+	// FIXME only for testing..?
+	if (tryLoadingAttached()) return;
 
 	std::cout << "Starting to attach bones.." << std::endl;
 	time_t start,end;
@@ -392,7 +421,7 @@ void Animation::printFinalAttachMatrix(std::ostream& out) const throw(WrongState
 //	out << attachWeight;
 	for (int i = 0; i < attachWeight.rows(); ++i) {
 		out << i;
-		for (int j = 0; j < attachWeight.rows(); ++j) {
+		for (int j = 0; j < attachWeight.cols(); ++j) {
 			out << " " << attachWeight(i,j);
 		}
 		out << std::endl;
@@ -433,11 +462,11 @@ void Animation::precalculateMesh() {
 			std::cout << " " << f; // << ":vertex[";
 			flush(std::cout);
 		}
-		// TODO just for speedup
-		if (f > 100) {
-			model->addFrame(oPoints, newNormals);
-			continue;
-		}
+//		// TODO just for speedup
+//		if (f > 100) {
+//			model->addFrame(oPoints, newNormals);
+//			continue;
+//		}
 
 		precalcMeshFile << "---- Frame " << f << ":";
 
