@@ -422,8 +422,11 @@ void Animation::precalculateMesh() {
 
 	std::vector<Point> newNormals; // fake one
 
+	std::ofstream precalcMeshFile("meshMotion.out");
 	// for each frame
 	for (unsigned f = 0; f < frameNum; ++f) {
+		precalcMeshFile << "---- Frame " << f << ":";
+
 		//for each original point (// FIXME later handle normals too)
 		std::vector<Point> newPoints;
 		for (unsigned vNum = 0; vNum < oPoints.size(); ++vNum) {
@@ -436,9 +439,12 @@ void Animation::precalculateMesh() {
 				}
 			}
 			newPoints.push_back(newPoint);
+			precalcMeshFile << "  " << newPoint;
 		}
+		precalcMeshFile << std::endl;
 		model->addFrame(newPoints, newNormals);
 	}
+	precalcMeshFile.close();
 
 	std::cout << "Done" << std::endl;
 }
@@ -457,16 +463,20 @@ void Animation::display(bool showSelBone) {
 	timeOfPreviousCall = curTime;
 
 	int frame = int(curFrameFrac); // should be ok .. handles -1 and positive values?
-	model->display(-1); // FIXME later this should be frame
+	if (debug::ison(debug::EVERYTHING)) std::cout << "Drawing Frame " << curFrameFrac << "->" << frame << std::endl;
 
-//	if (MYINFO) std::cout << "Drawing Frame " << curFrameFrac << std::endl;
+	// handles its own color and width etc
+	model->display(frame); // FIXME later this should be frame
+
+	glColor3f(1.0, 1.0, 0.1); // make it yellow and thick
+    glLineWidth(3);
 	for (unsigned i = 0; i < roots.size(); ++i) {
 		roots[i].display(curFrameFrac, selectedBone); // TODO perhaps swtich to frame here too??
 	}
 
 	if (debug::ison(debug::EVERYTHING)) {
-		float currentColor[4];
-		glGetFloatv(GL_CURRENT_COLOR,currentColor);
+//		float currentColor[4];
+//		glGetFloatv(GL_CURRENT_COLOR,currentColor);
 
 	    glLineWidth(2);
 	    // also draw the good and bad attachements focrresponding to currently selected bone
@@ -482,7 +492,7 @@ void Animation::display(bool showSelBone) {
 			it->display();
 		}
 
-		glColor4fv(currentColor); // reset
+//		glColor4fv(currentColor); // reset
 	}
 
     glLineWidth(1); // assume it's 1

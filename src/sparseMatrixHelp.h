@@ -63,7 +63,8 @@ inline Eigen::SparseMatrix<double> delta(Eigen::VectorXd const& vec ) {
 }
 
 inline Eigen::Vector4d getVectorForm(Point const& p) {
-	Eigen::Vector4d v; // FIXME implement
+	Eigen::Vector4d v;
+	v << p.x(), p.y(), p.z(), 0;
 	return v;
 }
 

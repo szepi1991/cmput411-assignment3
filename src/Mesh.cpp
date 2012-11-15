@@ -256,11 +256,13 @@ void Mesh::display(int frame) const { // note default -1
 	}
 
 	// TODO optimize the selected stuff! maybe boost unordered_set
+//	unsigned fCount = 0;
 	for (std::vector<Face>::const_iterator it = faces.begin(); it != faces.end(); ++it) {
+//		if (frame != 0) std::cout << "face " << fCount++ << std::endl;
 		glBegin(GL_TRIANGLES);
 			for (unsigned vn = 0; vn < 3; ++vn) { // each face is a triangle
-				Point n = normalsList[frame][(*it)[vn].second];
-				Point v = verticesList[0][(*it)[vn].first]; // FIXME later make this based on frame too
+				Point n = normalsList[0][(*it)[vn].second]; // FIXME later make this based on frame too
+				Point v = verticesList[frame][(*it)[vn].first];
 				if (selected->find( (*it)[vn].first ) != selected->end() ) {
 					glColor4f(1.0, 0.0, 0.0, 0.5); // red
 				} else {
@@ -274,7 +276,7 @@ void Mesh::display(int frame) const { // note default -1
 			// now also draw the normals..
 			glColor3f(0.0, 0.0, 1.0);
 			for (unsigned vn = 0; vn < 3; ++vn) { // each face is a triangle
-				Point n = normalsList[frame][(*it)[vn].second];
+				Point n = normalsList[0][(*it)[vn].second];// FIXME later make this based on frame too
 				Point v = verticesList[frame][(*it)[vn].first];
 				glBegin(GL_LINES);
 					glVertex3f(v.x(), v.y(), v.z());

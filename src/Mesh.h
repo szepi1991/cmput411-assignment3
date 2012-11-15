@@ -90,6 +90,9 @@ public:
 	void addFrame(std::vector<Point> const& verts, std::vector<Point> const& normals) {
 		verticesList.push_back(verts);
 		normalsList.push_back(normals);
+		if (debug::ison(debug::EVERYTHING)) {
+			std::cout << "Now " << verticesList.size() << "," << normalsList.size() << " frames in the Mesh." << std::endl;
+		}
 	}
 
 	void setWireFrame(bool val) { wireFrame = val; }
