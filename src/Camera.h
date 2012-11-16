@@ -9,8 +9,6 @@
 #ifndef CAMERA_H_
 #define CAMERA_H_
 
-#include "Matrix4x4.h"
-
 class Camera {
 private:
 //	double eyeXP, eyeYP, eyeZP;

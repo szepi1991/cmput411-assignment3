@@ -22,8 +22,8 @@ class LineSegment;
 
 class Animation {
 public:
-	enum AttachMatrix {SIMPLE_M, VISIBLE_M}; // FIXME allow the attachWeights to be displayed as well!
-	// FIXME make stuff as red as high the weight is!
+	enum AttachMatrix {SIMPLE_M, VISIBLE_M};
+	// TODO allow the attachWeights to be displayed as well, and make stuff as red as high the weight is
 
 private:
 	static const float WIDTH = 5;

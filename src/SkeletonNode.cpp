@@ -400,7 +400,8 @@ void SkeletonNode::getLocationRec(Eigen::Vector4f & p, int boneNum, unsigned fra
 //	std::cout << "In " << getUpperBoneNum() << "\tneed " << boneNum << std::endl;
 
 	// first call recursively for appropriate child (since we did dfs bone nums have bracket property)
-	if (boneNum != getUpperBoneNum()) { // NOT base case
+//	if (boneNum != getUpperBoneNum()) { // NOT base case
+	if (boneNum != myNodeNum) { // NOT base case
 		for (std::vector<SkeletonNode>::const_reverse_iterator it = children.rbegin();
 												it != children.rend(); ++it) {
 			if (boneNum >= it->getUpperBoneNum()) {

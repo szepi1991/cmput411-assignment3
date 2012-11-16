@@ -24,8 +24,9 @@ Camera::Camera() {
 	near = 3.0f;
 	far = 150.0f;
 
-	turnSpeed = 5; // TODO change back to 10
-	moveSpeed = 0.5; // change back to 0.1
+	turnSpeed = /*10; */ 5; // i like these second ones better
+	moveSpeed = /*0.1; */ 0.5; // i like these second ones better
+
 //	reset();
 //	//set the default camera: looking at origin from +5 on z axis
 //	eyeXP = 8.0, eyeYP = 10.0, eyeZP = 15.0;
@@ -47,8 +48,9 @@ void Camera::reset() {
 // makes sure that the axis aligned box is visible in the camera (and y is up)
 void Camera::makeVisible(float xMin, float xMax,
 					float yMin, float yMax, float zMin, float zMax) {
-	// TODO we can actually use the gluLookAt here and save the tansformation we get out of it
-	float yPos = (yMax + yMin) / 2; // just the average
+//	float yPos = (yMax + yMin) / 2; // just the average
+	float yPos = yMax; // lift it up a bit
+
 	float xPos, zPos;
 	// find position (x, z) st when camera is facing along one of these axes
 	// the box is fully in the view but and as big as possible

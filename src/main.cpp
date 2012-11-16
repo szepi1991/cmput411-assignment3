@@ -58,7 +58,7 @@ void loadThings(int argc, char **argv) throw (int) {
 		float xMin, xMax, yMin, yMax, zMin, zMax;
 		anim->closestFit(xMin, xMax, yMin, yMax, zMin, zMax);
 
-		float extra = 1.5; // TODO maybe based on figure size? (our upper bound is too big)
+		float extra = 1; // TODO maybe based on figure size? (our upper bound is too big)
 		cam.makeVisible(xMin-extra, xMax+extra,
 				yMin-extra, yMax+extra, zMin-extra, zMax+extra);
 

@@ -214,7 +214,7 @@ bool Animation::tryLoadingAttached() {
 void Animation::attachBonesToMesh() {
 
 	// FIXME only for testing..?
-	if (tryLoadingAttached()) return;
+//	if (tryLoadingAttached()) return;
 
 	std::cout << "Starting to attach bones.." << std::endl;
 	time_t start,end;
@@ -351,7 +351,17 @@ void Animation::findFinalAttachmentWeights(Eigen::SparseMatrix<double>* connMatr
 	typedef Eigen::SparseMatrix<double> SpMat;
 	SpMat Dh = delta(importances);
 	SpMat A = model->getLaplacian() + Dh;
-	Eigen::SimplicialCholesky<SpMat> chol(A); // performs a Cholesky factorization of A
+//	Eigen::SimplicialCholesky<SpMat> chol(A); // performs a Cholesky factorization of A
+//	Eigen::ConjugateGradient<SpMat> chol2;
+	Eigen::SimplicialLDLT<SpMat> chol(A);
+	double offset = 1e-10;
+	while (chol.info()!=Eigen::Success) {
+		std::cerr << "Solver failed... shift diagonal by " << offset << std::endl;
+
+		chol.setShift(offset);
+		chol.compute(A);
+		offset *= 2;
+	}
 	// for each column of visConMat do it separately:
 	for (int curCol = 0; curCol < visConMat.cols(); ++curCol) {
 		Eigen::VectorXd col = visConMat.col(curCol);
@@ -473,16 +483,7 @@ void Animation::precalculateMesh() {
 		//for each original point (// FIXME later handle normals too)
 		newPoints.clear();
 		for (unsigned vNum = 0; vNum < oPoints.size(); ++vNum) {
-//			std::cout << " " << vNum;
-//			flush(std::cout);
 			Point newPoint(0,0,0);
-
-//			// just the closest one
-//			int bone;
-//			attachWeight.row(vNum).maxCoeff(&bone);
-//			oldLoc = getVectorFormPoint(oPoints[vNum]);
-//			roots[0].getLocationRec(oldLoc, (int) bone, f);
-//			newPoint = Point(oldLoc(0), oldLoc(1), oldLoc(2));
 
 			// combination of attached matrices
 			for (unsigned cBone = 0; cBone < bones; ++cBone) {
@@ -496,7 +497,6 @@ void Animation::precalculateMesh() {
 			newPoints.push_back(newPoint);
 			precalcMeshFile << "  " << newPoint;
 		}
-//		std::cout << "]";
 		precalcMeshFile << std::endl;
 		model->addFrame(newPoints, newNormals);
 	}
