@@ -325,6 +325,36 @@ void testCode() {
 //	matrix.printVector(vecd);
 }
 
+void printInstructions() {
+	cout << "------- CAMERA CONTROLS -------" << endl;
+	cout << "  Arrow Keys for x,y movement  " << endl;
+	cout << "      i and I for zoom         " << endl;
+	cout << "      t and T for tilt" << endl;
+	cout << "      a and A for pan" << endl;
+	cout << "      c and C for roll" << endl << endl;
+
+	cout << "----- ANIMATION CONTROLS -----" << endl;
+	cout << "          p to play  " << endl;
+	cout << "         P to pause  " << endl;
+	cout << "     s to stop and reset  " << endl;
+	cout << " - and + to change anim speed" << endl << endl;
+
+	cout << "------ BONE CONNECTIONS ------" << endl;
+	cout << "   '/' to switch between \\" << endl <<
+			"  displayed connection type  " << endl;
+	cout << " ',' to select previous bone " << endl;
+	cout << "   '.' to select next bone " << endl << endl;
+
+	cout << "------ OTHER CONTROLS ------" << endl;
+	cout << "    l to show wire frame  " << endl;
+	cout << "  L to show shaded figure  " << endl;
+	cout << "   w to print out infos  " << endl << endl;
+
+	cout << "Do not press 'z'!" << endl;
+	cout << "'q' to quit" << endl;
+}
+
+
 int main(int argc, char **argv) {
 
 	testCode();
@@ -344,6 +374,8 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 	graphicsSetup();
+
+	printInstructions();
 
 	glutDisplayFunc(drawScene);
 	glutReshapeFunc(resize);

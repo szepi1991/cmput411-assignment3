@@ -52,7 +52,7 @@ public:
 	float getLengthSqr() const { return dot(*this); }
 	float getLength() const {return std::sqrt( getLengthSqr() ); }
 
-	// TODO throws 0 if index is out of bounds
+	// throws 0 if index is out of bounds .. TODO could make it nicer
 	float get(unsigned i) throw(int) {
 		switch (i) {
 		case 0: return mx;
@@ -189,10 +189,9 @@ inline bool intersectLineSegWithTriangle(LineSegment const & l, Triangle const &
 
 	// let x = [b, g, l]. Then intersects iff
 	// 0 <= b, g. b+g <= 1. 0 < l < 1
-	return (interSectMatr::x(0, 0) >= 0 && interSectMatr::x(1,0) >= 0 && // TODO make these 0s into EPS as well
+	return (interSectMatr::x(0, 0) >= 0 && interSectMatr::x(1,0) >= 0 && // TODO make these 0s into EPS as well?
 			interSectMatr::x(0,0) + interSectMatr::x(1,0) <= 1 &&
 			0.0001 < interSectMatr::x(2,0) && interSectMatr::x(2,0) < (1-0.0001) );
-	// FIXME use 0.0001 not 0.1. If used on person-small right now, toes get matched up to handbones.. or is there another issue?
 }
 
 

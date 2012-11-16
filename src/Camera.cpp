@@ -24,8 +24,8 @@ Camera::Camera() {
 	near = 3.0f;
 	far = 150.0f;
 
-	turnSpeed = /*10; */ 5; // i like these second ones better
-	moveSpeed = /*0.1; */ 0.5; // i like these second ones better
+	turnSpeed = 10; /* 5; // FIXME i like these second ones better */
+	moveSpeed = 0.1; /* 0.5; // FIXME i like these second ones better  */
 
 //	reset();
 //	//set the default camera: looking at origin from +5 on z axis
@@ -49,7 +49,7 @@ void Camera::reset() {
 void Camera::makeVisible(float xMin, float xMax,
 					float yMin, float yMax, float zMin, float zMax) {
 //	float yPos = (yMax + yMin) / 2; // just the average
-	float yPos = yMax; // lift it up a bit
+	float yPos = (1.0/5.0) * yMin + (4.0/5.0) * yMax; // lift it up a bit
 
 	float xPos, zPos;
 	// find position (x, z) st when camera is facing along one of these axes

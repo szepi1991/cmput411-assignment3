@@ -22,7 +22,7 @@
 //#define SECtoMSEC 10000.0f
 
 #define PI 3.14159265359
-#define EPS 0.00001 // TODO this seems appropriate for floating point arithmetic.. no?
+#define EPS 0.000001 // TODO made 1 smaller
 
 #define degToRad(x) (x*PI/180)
 #define radToDeg(x) (x*180/PI)
@@ -33,7 +33,7 @@
 // TODO optimize this perhaps..
 namespace debug {
 	enum InfoLevel {NONE, LITTLE, DETAILED, EVERYTHING};
-	static const InfoLevel level = DETAILED;
+	static const InfoLevel level = LITTLE;
 	inline bool ison(InfoLevel a) {
 		return ((unsigned) level >= (unsigned) a );
 	}

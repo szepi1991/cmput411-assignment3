@@ -27,7 +27,7 @@
 #include <ctime>
 
 Animation::Animation(char *filename) throw(ParseException) :
-					figureSize(0), selectedBone(0), displayOnMeshType(SIMPLE_M) {
+					figureSize(0), selectedBone(0), displayOnMeshType(NONE_M) {
 
 	std::ifstream infile(filename);
 	// read stuff in
@@ -89,7 +89,7 @@ Animation::Animation(char *filename) throw(ParseException) :
 
 	curFrameFrac = -1;
 
-	// TODO test: setup attachment vectors to have correct size
+	// TODO for testing only: setup attachment vectors to have correct size
 	for (unsigned i = 0; i < SkeletonNode::getNumberOfNodes(); ++i) {
 		std::vector<LineSegment> empty;
 		intersectingAtt.push_back(empty);
@@ -213,7 +213,7 @@ bool Animation::tryLoadingAttached() {
  */
 void Animation::attachBonesToMesh() {
 
-	// FIXME only for testing..?
+	// TODO only for testing..?
 //	if (tryLoadingAttached()) return;
 
 	std::cout << "Starting to attach bones.." << std::endl;
@@ -223,7 +223,7 @@ void Animation::attachBonesToMesh() {
 	std::vector<Tr> simpleTripletList;
 	std::vector<Tr> visibleTripletList;
 	unsigned numVert = model->getNumVertices();
-	simpleTripletList.reserve(numVert*2); // TODO try changing this and see what happens
+	simpleTripletList.reserve(numVert*2);
 	visibleTripletList.reserve(numVert*2);
 
 	simpleConMat.resize(numVert, SkeletonNode::getNumberOfNodes());
@@ -239,6 +239,7 @@ void Animation::attachBonesToMesh() {
 	const Point * vertex;
 	unsigned vNum = 0;
 
+	// TODO these are just for testing
 	std::ofstream logfile("attachments.log");
 	std::ofstream sdistsfile("Sdists.log");
 
@@ -246,9 +247,7 @@ void Animation::attachBonesToMesh() {
 	std::set<Attachment> attachments; // could reserve size too..
 	std::vector<SkeletonNode> closests;
 	std::vector<SkeletonNode> closestsVis;
-	while (vertex = model->getOrigVertex(vNum), vertex != NULL
-//			&& vNum < 10 // TODO test
-										) {
+	while (vertex = model->getOrigVertex(vNum), vertex != NULL	) {
 		if (vNum % 100 == 0 && debug::ison(debug::LITTLE)) {
 			std::cout << vNum << " ";
 			std::flush(std::cout);
@@ -283,7 +282,6 @@ void Animation::attachBonesToMesh() {
 			simpleTripletList.push_back(Tr(vNum, it->getUpperBoneNum(), 1.0/double(closests.size()) ));
 		}
 
-		// TODO testing
 		sdistsfile << vNum << " " << minSimpleDist << std::endl;
 
 		// now find the list of closest VISIBLE attachments (attachments is ordered so easy)
@@ -356,7 +354,7 @@ void Animation::findFinalAttachmentWeights(Eigen::SparseMatrix<double>* connMatr
 	Eigen::SimplicialLDLT<SpMat> chol(A);
 	double offset = 1e-10;
 	while (chol.info()!=Eigen::Success) {
-		std::cerr << "Solver failed... shift diagonal by " << offset << std::endl;
+		std::cout << "Solver failed... shift diagonal by " << offset << std::endl;
 
 		chol.setShift(offset);
 		chol.compute(A);
@@ -382,10 +380,11 @@ void Animation::findFinalAttachmentWeights(Eigen::SparseMatrix<double>* connMatr
 
 void Animation::updateMeshSelected() {
 	if (model) {
-		// want all the i's st (i, selectedBone) is nonzero in simpleConMat
 		boost::shared_ptr< std::set<unsigned> > sel( new std::set<unsigned> );
+		// want all the i's st (i, selectedBone) is nonzero in simpleConMat
 		Eigen::SparseMatrix<double>* matToUse;
 		switch (displayOnMeshType) {
+		case NONE_M: model->setSelectedVerts(sel); return; // empty
 		case SIMPLE_M: matToUse = &simpleConMat; break;
 		case VISIBLE_M: matToUse = &visConMat; break;
 		default: throw(0);
@@ -472,15 +471,11 @@ void Animation::precalculateMesh() {
 			std::cout << " " << f; // << ":vertex[";
 			flush(std::cout);
 		}
-//		// TODO just for speedup
-//		if (f > 100) {
-//			model->addFrame(oPoints, newNormals);
-//			continue;
-//		}
 
 		precalcMeshFile << "---- Frame " << f << ":";
 
-		//for each original point (// FIXME later handle normals too)
+		//for each original point
+		// TODO should we handle normals.. seems fine.
 		newPoints.clear();
 		for (unsigned vNum = 0; vNum < oPoints.size(); ++vNum) {
 			Point newPoint(0,0,0);
@@ -525,15 +520,16 @@ void Animation::display(bool showSelBone) {
 	// handles its own color and width etc
 	model->display(frame);
 
-	glColor3f(1.0, 1.0, 0.1); // make it yellow and thick
-    glLineWidth(3);
-	for (unsigned i = 0; i < roots.size(); ++i) {
-		roots[i].display(curFrameFrac, selectedBone); // TODO perhaps swtich to frame here too??
+	if (debug::ison(debug::DETAILED)) {
+		// right now don't display skeleton by default
+		glColor3f(1.0, 1.0, 0.1); // make it yellow and thick
+	    glLineWidth(3);
+		for (unsigned i = 0; i < roots.size(); ++i) {
+			roots[i].display(curFrameFrac, selectedBone); // TODO perhaps swtich to frame here too??
+		}
 	}
 
 	if (debug::ison(debug::EVERYTHING)) {
-//		float currentColor[4];
-//		glGetFloatv(GL_CURRENT_COLOR,currentColor);
 
 	    glLineWidth(2);
 	    // also draw the good and bad attachements focrresponding to currently selected bone
@@ -549,7 +545,6 @@ void Animation::display(bool showSelBone) {
 			it->display();
 		}
 
-//		glColor4fv(currentColor); // reset
 	}
 
     glLineWidth(1); // assume it's 1

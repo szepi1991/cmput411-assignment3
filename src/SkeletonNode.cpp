@@ -396,7 +396,7 @@ void SkeletonNode::getClosestBones(Point p, std::set<Attachment>& bones) const {
 // where it would be (in parent coordinates again) if it was attached
 // to bone boneNum in frame frameNum
 void SkeletonNode::getLocationRec(Eigen::Vector4f & p, int boneNum, unsigned frameNum) const {
-	if (children.size() == 0) return; // TODO I'm not certain..
+	if (children.size() == 0) return;
 //	std::cout << "In " << getUpperBoneNum() << "\tneed " << boneNum << std::endl;
 
 	// first call recursively for appropriate child (since we did dfs bone nums have bracket property)
@@ -412,9 +412,6 @@ void SkeletonNode::getLocationRec(Eigen::Vector4f & p, int boneNum, unsigned fra
 	}
 
 	p -= worldOffsetE;
-//	const Eigen::Map<const Eigen::Matrix4f> t = motion[frameNum].getMatrix();
-//	const Eigen::Matrix4f t = motion[frameNum].getMatrix();
-//	Eigen::Vector4f r = t*p;
 	p = motion[frameNum].getMatrix() * p; // TODO ok??
 	p += worldOffsetE;
 

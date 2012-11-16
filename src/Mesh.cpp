@@ -148,37 +148,7 @@ void Mesh::findLaplacian() {
 	Eigen::VectorXd ones = Eigen::VectorXd::Ones(getNumVertices());
 	Eigen::VectorXd res = adjacencyMatrix*ones;
 
-//	// TODO slow way -- see online tutorial on sparse matrices "Iterating over the nonzero coefficients"
-//	std::ofstream outres("A1.out");
-//	for (int i = 0; i < res.rows(); ++i) {
-//		outres << " " << res(i);
-//		outres << std::endl;
-//	}
-//	outres.close();
-
-//	typedef Eigen::Triplet<double> Tr;
-//	std::vector<Tr> deltaTriplets;
-//	deltaTriplets.reserve(getNumVertices());
-//	for (unsigned i = 0; i < getNumVertices(); ++i) {
-//		deltaTriplets.push_back(Tr(i, i, res(i)));
-//	}
-//
-//	Eigen::SparseMatrix<double> delta(getNumVertices(), getNumVertices());
-//	delta.reserve(getNumVertices());
-//	delta.setFromTriplets(deltaTriplets.begin(), deltaTriplets.end());
-
 	Eigen::SparseMatrix<double> deltaM = delta(res);
-
-//	// TODO slow way -- see online tutorial on sparse matrices "Iterating over the nonzero coefficients"
-//	std::ofstream outdelta("delta.out");
-//	for (int i = 0; i < delta.rows(); ++i) {
-//		outdelta << i;
-//		for (int j = 0; j < delta.cols(); ++j) {
-//			if (delta.coeff(i,j) != 0) outdelta << " " << j << ":" << delta.coeff(i,j);
-//		}
-//		outdelta << std::endl;
-//	}
-//	outdelta.close();
 
 	laplacian = deltaM - adjacencyMatrix;
 }
@@ -261,7 +231,7 @@ void Mesh::display(int frame) const { // note default -1
 //		if (frame != 0) std::cout << "face " << fCount++ << std::endl;
 		glBegin(GL_TRIANGLES);
 			for (unsigned vn = 0; vn < 3; ++vn) { // each face is a triangle
-				Point n = normalsList[0][(*it)[vn].second]; // FIXME later make this based on frame too
+				Point n = normalsList[0][(*it)[vn].second]; // TODO later make this based on frame too? normals not calculated now.. see Animation.cpp precalculate..
 				Point v = verticesList[frame][(*it)[vn].first];
 				if (selected->find( (*it)[vn].first ) != selected->end() ) {
 					glColor4f(1.0, 0.0, 0.0, 0.5); // red
@@ -276,7 +246,7 @@ void Mesh::display(int frame) const { // note default -1
 			// now also draw the normals..
 			glColor3f(0.0, 0.0, 1.0);
 			for (unsigned vn = 0; vn < 3; ++vn) { // each face is a triangle
-				Point n = normalsList[0][(*it)[vn].second];// FIXME later make this based on frame too
+				Point n = normalsList[0][(*it)[vn].second];// TODO later make this based on frame too? normals not calculated now.. see Animation.cpp precalculate..
 				Point v = verticesList[frame][(*it)[vn].first];
 				glBegin(GL_LINES);
 					glVertex3f(v.x(), v.y(), v.z());

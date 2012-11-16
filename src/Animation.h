@@ -22,7 +22,7 @@ class LineSegment;
 
 class Animation {
 public:
-	enum AttachMatrix {SIMPLE_M, VISIBLE_M};
+	enum AttachMatrix {NONE_M, SIMPLE_M, VISIBLE_M};
 	// TODO allow the attachWeights to be displayed as well, and make stuff as red as high the weight is
 
 private:
@@ -57,7 +57,7 @@ private:
 	Eigen::VectorXd importances;
 	Eigen::MatrixXd attachWeight;
 
-	// TODO testing
+	// TODO for testing
 	std::vector< std::vector<LineSegment> > intersectingAtt;
 	std::vector< std::vector<LineSegment> > connectedAtt;
 
@@ -97,9 +97,7 @@ public:
 	void setModel(boost::shared_ptr<Mesh> const & m) {
 		model = m;
 		importances.resize(model->getNumVertices()); // this does not look like a good place for this..
-		attachBonesToMesh(); // FIXME testing
-//		attachWeight.resize(model->getNumVertices(), SkeletonNode::getNumberOfNodes());
-//		attachWeight = Eigen::MatrixXd::Identity(model->getNumVertices(), SkeletonNode::getNumberOfNodes());
+		attachBonesToMesh();
 		precalculateMesh();
 	}
 	void printAttachedMatrix(std::ostream& out, AttachMatrix mType) const throw(WrongStateException);
@@ -130,8 +128,9 @@ public:
 		if ((int) displayOnMeshType > (int) VISIBLE_M) displayOnMeshType = (AttachMatrix) 0; // do not forget to update this
 		std::cout << "On mesh we are now displaying attachments of type ";
 		switch (displayOnMeshType) {
-		case SIMPLE_M: std::cout << "SIMPLE"; break;
-		case VISIBLE_M: std::cout << "VISIBLE"; break;
+		case NONE_M: std::cout << "NONE"; break;
+		case SIMPLE_M: std::cout << "CLOSEST"; break;
+		case VISIBLE_M: std::cout << "CLOSEST VISIBLE"; break;
 		default: throw(0);
 		}
 		std::cout << std::endl;

@@ -31,6 +31,6 @@ public:
 	friend std::ostream& operator<< (std::ostream &out, Attachment const& a);
 };
 
-std::ostream& operator<<(std::ostream& os, const Attachment& a); // TODO might cause issues later that it's not inline?
+std::ostream& operator<<(std::ostream& os, const Attachment& a);
 
 #endif /* ATTACHMENT_H_ */
